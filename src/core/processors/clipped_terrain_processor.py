@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from config.configuration import config
+from config.source_type import SourceType
 from core.ifc.model.clipped_terrain import ClippedTerrain
 from core.tin.mesh import Mesh
 from core.tin.polygon import Area
@@ -16,18 +17,18 @@ logger = logging.getLogger(__name__)
 class ClippedTerrainProcessor:
 
     def __init__(self):
-        self.feature_classes = config.ifc.clipped_terrain
         self.postgis_service = PostgisService()
         self.stac_service = STACService()
 
-    def process(self, polygon, origin, model):
-        if not self.feature_classes:
+    def process(self, polygon, origin):
+        feature_classes = {ct.name: ct for ct in config.ifc.clipped_terrain}
+        if not feature_classes:
             logger.info("no clipped terrain feature classes configured")
-            return
+            return {}
 
         wkts = []
         feature_class_elements = {}
-        for feature_class_key, feature_class in self.feature_classes.items():
+        for feature_class_key, feature_class in feature_classes.items():
             logger.info(f"fetch {feature_class_key}")
             with open(feature_class.sql_path, "r") as file:
                 sql = file.read()
@@ -47,7 +48,8 @@ class ClippedTerrainProcessor:
         dtm_files = self.stac_service.fetch_dtm_assets(bounding_box, config.tin.grid_size)
         logger.info(f"fetched {len(dtm_files)} dtm files")
 
-        for feature_class_key, feature_class in self.feature_classes.items():
+        clipped_terrains = {}
+        for feature_class_key, feature_class in feature_classes.items():
             logger.info(f"create {feature_class_key} feature class")
             elements = feature_class_elements[feature_class_key]
 
@@ -71,16 +73,30 @@ class ClippedTerrainProcessor:
             for index, mesh_data in enumerate(mesh_datas):
                 logger.debug(f"create mesh for element {index + 1}/{len(elements)}")
                 mesh = mesh_data.create_mesh()
-                groups = [mesh_data.element_data[group_column] for group_column in feature_class.group_columns]
-                element = ClippedTerrain(mesh.get_data(), groups)
+                element = ClippedTerrain(mesh.get_data())
                 for attribute in feature_class.attributes:
-                    if attribute.column in mesh_data.element_data:
-                        element.add_attribute(attribute.name, mesh_data.element_data[attribute.column])
+                    if attribute.source.type == SourceType.SQL:
+                        if attribute.source.expression in mesh_data.element_data:
+                            element.add_attribute(attribute.attribute, mesh_data.element_data[attribute.source.expression])
+                    elif attribute.source.type == SourceType.STATIC:
+                        element.add_attribute(attribute.attribute, attribute.source.expression)
                 for p in feature_class.properties:
-                    if p.column in mesh_data.element_data:
-                        element.add_property(p.set, p.name, mesh_data.element_data[p.column])
-                model.add_clipped_terrain(feature_class_key, element)
+                    if p.source.type == SourceType.SQL:
+                        if p.source.expression in mesh_data.element_data:
+                            element.add_property(p.property_set, p.property, mesh_data.element_data[p.source.expression])
+                    elif p.source.type == SourceType.STATIC:
+                        element.add_property(p.property_set, p.property, p.source.expression)
+                for group_assignment in feature_class.group_assignments:
+                    if group_assignment.type == SourceType.SQL:
+                        element.add_group(mesh_data.element_data[group_assignment.expression])
+                    elif group_assignment.type == SourceType.STATIC:
+                        element.add_group(group_assignment.expression)
+
+                if not feature_class_key in clipped_terrains:
+                    clipped_terrains[feature_class_key] = []
+                clipped_terrains[feature_class_key].append(element)
             logger.info("finished creating meshes")
+        return clipped_terrains
 
 class MeshData:
 

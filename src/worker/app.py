@@ -7,11 +7,12 @@ from datetime import datetime
 from core.ifc.model.ifc_version import IfcVersion
 from core.model_generator import ModelGenerator
 from utils.utils import get_output_path, setup_logger
+from config.configuration import config
 
 app = Celery(
     "cs2bim",
-    broker="redis://redis:6379/0",
-    backend="redis://redis:6379/1"
+    broker=f"redis://{config.redis.host}:{config.redis.port}/{config.redis.db.celery_broker}",
+    backend=f"redis://{config.redis.host}:{config.redis.port}/{config.redis.db.celery_backend}"
 )
 
 app.conf.task_track_started = True
@@ -24,12 +25,13 @@ def setup_logger_on_worker(**kwargs):
 
 
 @app.task(bind=True)
-def model_generation_task(self, ifc_version, name, polygon, project_origin):
+def model_generation_task(self, ifc_version, name, polygon, project_origin, language):
     logger = logging.getLogger(__name__)
     try:
         logger.info(f"Task {self.request.id}: Starting model generation")
         model_generator = ModelGenerator()
-        ifc_file = model_generator.generate(IfcVersion(ifc_version), name, polygon, project_origin)
+        model = model_generator.generate(IfcVersion(ifc_version), name, polygon, project_origin)
+        ifc_file = model.map_to_ifc(language)
         output_path = get_output_path(self.request.id)
         ifc_file.write(output_path)
         logger.info(f"Task {self.request.id}: Model generation completed, file saved to {output_path}")
