@@ -1,11 +1,10 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Annotated
-from typing import Optional
-
 from pydantic import BaseModel, model_validator, Field
 from pydantic_yaml import parse_yaml_raw_as
+from typing import List, Annotated
+from typing import Optional
 
 from config.element_attribute import ElementAttribute
 from config.element_entity_type import ElementEntityType
@@ -102,6 +101,7 @@ class RedisConfig(BaseModel):
     host: str
     port: int
     db: RedisDBConfig
+    global_keyprefix: Optional[str] = None
 
 
 class DBConfig(BaseModel):
