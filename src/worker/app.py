@@ -8,7 +8,7 @@ Handles task queue setup, logging initialization, and model generation processes
 import logging
 from celery import Celery
 from celery.signals import worker_process_init
-from core.ifc.model.coordinate import Coordinates
+from core.ifc.model.coordinates import Coordinates
 from datetime import datetime
 
 from config.configuration import config
