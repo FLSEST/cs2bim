@@ -1,8 +1,19 @@
+import logging
+
 import numpy as np
 import shapely
+from shapely.geometry.base import BaseGeometry
+from shapely.geometry.polygon import Polygon
+
+from config.configuration import config
+from core.ifc.model.coordinates import Coordinates
+from core.tin.mesh import Mesh
+from core.tin.raster_points import RasterPoints
+
+logger = logging.getLogger(__name__)
 
 
-class Area(object):
+class Area:
     """
     Class representing a polygonal area including holes if present.
 
@@ -16,25 +27,49 @@ class Area(object):
 
     Parameters
     ----------
-    wkt_str : str
-        WKT string defining the polygon
-    origin : np.ndarray of form [x, y]
+    polygon
+    origin :
         Origin to reduce coordinate values
     """
 
-    def __init__(self, wkt_str: str, origin: np.ndarray = np.zeros((2,))) -> None:
-        assert isinstance(wkt_str, str)
+    def __init__(self, polygon: BaseGeometry, project_origin: Coordinates):
+        if not isinstance(polygon, shapely.Polygon):
+            raise ValueError(f"{type(polygon).__name__} not supported")
 
-        if isinstance(shapely.from_wkt(wkt_str), shapely.MultiPolygon):
-            raise ValueError("multi polygon not supported")
+        self._geometry = self._check_polygon_definition(polygon)
 
-        self._geometry = self._check_polygon_definition(shapely.from_wkt(wkt_str))
+        project_origin = np.array(project_origin.to_tuple()[:2])
+        assert project_origin.shape == (2,)
+        if not np.allclose(project_origin, np.zeros((2,))):
+            self._reduce(project_origin)
 
-        assert origin.shape == (2,)
-        if not np.allclose(origin, np.zeros((2,))):
-            self._reduce(origin)
+        self.raster_points_within = []
+        self.raster_points_buffer = []
 
-    def _check_polygon_definition(self, poly: shapely.Polygon):
+    def add_raster_points(self, raster_points: RasterPoints):
+        rpb = raster_points.within(self.get_geometry, 3 * config.tin.grid_size.value)
+        if rpb is not None:
+            self.raster_points_buffer.append(rpb)
+        rpw = raster_points.within(self.get_geometry, 0)
+        if rpw is not None:
+            self.raster_points_within.append(rpw)
+
+    def create_mesh(self) -> Mesh:
+        if self.raster_points_buffer:
+            mesh = Mesh(np.vstack(self.raster_points_buffer))
+        else:
+            mesh = Mesh(np.empty((0, 3)))
+        if self.raster_points_within:
+            mesh_clipped = mesh.clip_mesh_by_area(self, np.vstack(self.raster_points_within))
+        else:
+            mesh_clipped = mesh.clip_mesh_by_area(self, np.empty((0, 3)))
+        mesh_clipped_decimated = mesh_clipped.decimate(config.tin.max_height_error, config.tin.grid_size.value)
+        logger.debug(
+            f"area consistency: {mesh_clipped_decimated.check_area_consistency(self.get_area, 0.1)}"
+        )
+        return mesh_clipped_decimated
+
+    def _check_polygon_definition(self, poly: Polygon) -> Polygon:
         """
         Checks polygon definition and creates a geometry object.
 
@@ -44,12 +79,12 @@ class Area(object):
 
         Parameters
         ----------
-        poly : shapely.Polygon
+        poly :
             Polygon to be checked
 
         Returns
         -------
-        _ : shapely.Polygon
+        _ :
             Checked and possibly corrected polygon
         """
 
@@ -74,7 +109,7 @@ class Area(object):
 
         return shapely.Polygon(shell=shell, holes=holes)
 
-    def _reduce(self, origin):
+    def _reduce(self, origin: np.ndarray):
         """Reduces coordinates by origin"""
 
         shell = (np.stack(self._geometry.exterior.coords.xy).T - origin).tolist()
@@ -95,12 +130,12 @@ class Area(object):
 
         Parameters
         ----------
-        exclude_last_point : bool; default = True
+        exclude_last_point :
             Whether to exclude last point (which is identical with first point)
 
         Returns
         -------
-        _ : np.ndarray
+        _ :
         """
         points = np.stack(self._geometry.exterior.coords.xy).T
         if exclude_last_point:
@@ -119,12 +154,12 @@ class Area(object):
 
         Parameters
         ----------
-        exclude_last_point : bool; default = True
+        exclude_last_point :
             Whether to exclude last point (which is identical with first point)
 
         Returns
         -------
-        _ : list[np.ndarray]
+        _ :
         """
         points = [np.stack(geom.coords.xy).T for geom in self._geometry.interiors]
 

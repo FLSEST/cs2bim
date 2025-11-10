@@ -1,14 +1,13 @@
 import logging
-
-import numpy as np
+from core.processors.projection_data import ProjectionData
+from typing import Any
 
 from config.configuration import config, ProjectionFeatureType, ProjectionAttributeConfig, ProjectionPropertyConfig
 from config.projection_source import ProjectionSource
+from core.ifc.model.coordinates import Coordinates
 from core.ifc.model.element import Element
 from core.ifc.model.projection import Projection
-from core.tin.mesh import Mesh
-from core.tin.polygon import Area
-from core.tin.raster import RasterPoints
+from core.tin.raster_points import RasterPoints
 from service.postgis_service import PostgisService
 from service.stac_service import STACService
 
@@ -21,22 +20,22 @@ class ProjectionProcessor:
         self.postgis_service = PostgisService()
         self.stac_service = STACService()
 
-    def process(self, polygon, origin):
-        feature_types = {ct.name: ct for ct in config.ifc.feature_types.projections}
-        if not feature_types:
+    def process(self, polygon: str, project_origin: Coordinates) -> dict[str, list[Projection]]:
+        feature_types_by_key = {p.name: p for p in config.ifc.feature_types.projections}
+        if not feature_types_by_key:
             logger.info("no projection feature types configured")
             return {}
 
         wkts = []
-        feature_type_elements = {}
-        for feature_type_key, feature_type in feature_types.items():
+        sql_results_by_feature_type = {}
+        for feature_type_key, feature_type in feature_types_by_key.items():
             logger.info(f"fetch {feature_type_key}")
             with open(feature_type.sql_path, "r") as file:
                 sql = file.read()
-            elements = self.postgis_service.fetch_feature_type_elements(sql, polygon)
-            feature_type_elements[feature_type_key] = elements
-            for element_data in elements:
-                wkts.append(element_data["wkt"])
+            sql_result = self.postgis_service.fetch_feature_type_elements(sql, polygon)
+            sql_results_by_feature_type[feature_type_key] = sql_result
+            for row in sql_result:
+                wkts.append(row["wkt"])
 
         logger.info("calculate bounding box for fetching dtm files")
         if len(wkts) == 0:
@@ -49,106 +48,78 @@ class ProjectionProcessor:
         dtm_files = self.stac_service.fetch_dtm_assets(bounding_box, config.tin.grid_size.value)
         logger.info(f"fetched {len(dtm_files)} dtm files")
 
-        projections = {}
-        for feature_type_key, feature_type in feature_types.items():
+        projections_by_key = {}
+        for feature_type_key, feature_type in feature_types_by_key.items():
             logger.info(f"create {feature_type_key} feature type")
-            elements = feature_type_elements[feature_type_key]
+            sql_result = sql_results_by_feature_type[feature_type_key]
 
-            mesh_datas = []
-            for element_data in elements:
+            projection_data = []
+            for element_row in sql_result:
                 try:
-                    mesh_data = MeshData(element_data, origin)
-                    mesh_datas.append(mesh_data)
+                    projection_element_data = ProjectionData(element_row, project_origin)
+                    projection_data.append(projection_element_data)
                 except Exception as e:
-                    logger.error(f"Error in element data: {e}. Skipping element...")
+                    logger.error(f"error in element data: {e}. Skipping element...")
 
             for dtm_file in dtm_files:
                 logger.info(f"load and process dtm file: {dtm_file}")
-                dtm_points = RasterPoints(dtm_file, origin=origin)
-                for index, mesh_data in enumerate(mesh_datas):
-                    logger.debug(f"calculate raster points for element {index + 1}/{len(elements)}")
-                    mesh_data.add_raster_points(dtm_points)
+                dtm_points = RasterPoints(dtm_file, project_origin)
+                for index, projection_element_data in enumerate(projection_data):
+                    logger.debug(f"calculate raster points for element {index + 1}/{len(sql_result)}")
+                    projection_element_data.add_raster_points(dtm_points)
             logger.info(f"finished processing dtm files")
 
             logger.info(f"create meshes for {feature_type_key} elements")
-            for index, mesh_data in enumerate(mesh_datas):
-                logger.debug(f"create mesh for element {index + 1}/{len(elements)}")
-                mesh = mesh_data.create_mesh()
-                element = Projection(mesh.get_data())
-                self.add_attributes(element, feature_type.entity_mapping.attributes, mesh_data)
-                self.add_properties(element, feature_type.entity_mapping.properties, mesh_data)
-                self.add_groups(element, feature_type, mesh_data)
+            for index, projection_element_data in enumerate(projection_data):
+                logger.debug(f"create mesh for element {index + 1}/{len(sql_result)}")
+                projection = self.create_projection(feature_type, projection_element_data)
 
-                spatial_structure = Element()
-                self.add_attributes(spatial_structure, feature_type.spatial_structure_mapping.attributes, mesh_data)
-                self.add_properties(spatial_structure, feature_type.spatial_structure_mapping.properties, mesh_data)
-                element.spatial_structure = spatial_structure
-
-                if feature_type.entity_type_mapping is not None:
-                    projection_element_type = Element()
-                    self.add_attributes(projection_element_type, feature_type.entity_type_mapping.attributes, mesh_data)
-                    self.add_properties(projection_element_type, feature_type.entity_type_mapping.properties, mesh_data)
-                    element.element_type = projection_element_type
-
-                if not feature_type_key in projections:
-                    projections[feature_type_key] = []
-                projections[feature_type_key].append(element)
+                if not feature_type_key in projections_by_key:
+                    projections_by_key[feature_type_key] = []
+                projections_by_key[feature_type_key].append(projection)
             logger.info("finished creating meshes")
-        return projections
+        return projections_by_key
 
-    def add_attributes(self, element: Element, attributes: list[ProjectionAttributeConfig], mesh_data):
+    def create_projection(self, feature_type: ProjectionFeatureType, projection_data: ProjectionData) -> Projection:
+        projection = Projection(projection_data.create_mesh_data())
+        self.add_attributes(projection, feature_type.entity_mapping.attributes, projection_data.element_row)
+        self.add_properties(projection, feature_type.entity_mapping.properties, projection_data.element_row)
+        self.add_groups(projection, feature_type, projection_data.element_row)
+        spatial_structure = Element()
+        self.add_attributes(spatial_structure, feature_type.spatial_structure_mapping.attributes,
+                            projection_data.element_row)
+        self.add_properties(spatial_structure, feature_type.spatial_structure_mapping.properties,
+                            projection_data.element_row)
+        projection.spatial_structure = spatial_structure
+        if feature_type.entity_type_mapping is not None:
+            projection_element_type = Element()
+            self.add_attributes(projection_element_type, feature_type.entity_type_mapping.attributes,
+                                projection_data.element_row)
+            self.add_properties(projection_element_type, feature_type.entity_type_mapping.properties,
+                                projection_data.element_row)
+            projection.element_type = projection_element_type
+        return projection
+
+    def add_attributes(self, element: Element, attributes: list[ProjectionAttributeConfig],
+                       element_row: dict[str, Any]):
         for attribute in attributes:
             if attribute.source.type == ProjectionSource.SQL:
-                if attribute.source.expression in mesh_data.element_data:
-                    element.add_attribute(attribute.attribute, mesh_data.element_data[attribute.source.expression])
+                if attribute.source.expression in element_row:
+                    element.add_attribute(attribute.attribute, element_row[attribute.source.expression])
             elif attribute.source.type == ProjectionSource.STATIC:
                 element.add_attribute(attribute.attribute, attribute.source.expression)
 
-    def add_properties(self, element: Element, properties: list[ProjectionPropertyConfig], mesh_data):
+    def add_properties(self, element: Element, properties: list[ProjectionPropertyConfig], element_row: dict[str, Any]):
         for p in properties:
             if p.source.type == ProjectionSource.SQL:
-                if p.source.expression in mesh_data.element_data:
-                    element.add_property(p.property_set, p.property, mesh_data.element_data[p.source.expression])
+                if p.source.expression in element_row:
+                    element.add_property(p.property_set, p.property, element_row[p.source.expression])
             elif p.source.type == ProjectionSource.STATIC:
                 element.add_property(p.property_set, p.property, p.source.expression)
 
-    def add_groups(self, element: Projection, feature_type: ProjectionFeatureType, mesh_data):
+    def add_groups(self, element: Projection, feature_type: ProjectionFeatureType, element_row: dict[str, Any]):
         for group_mapping in feature_type.group_mapping:
             if group_mapping.type == ProjectionSource.SQL:
-                element.add_group(mesh_data.element_data[group_mapping.expression])
+                element.add_group(element_row[group_mapping.expression])
             elif group_mapping.type == ProjectionSource.STATIC:
                 element.add_group(group_mapping.expression)
-
-
-class MeshData:
-
-    def __init__(self, element_data, origin):
-        self.element_data = element_data
-        self.area = Area(wkt_str=element_data["wkt"], origin=origin[:2])
-        self.raster_points_within = []
-        self.raster_points_buffer = []
-
-    def add_raster_points(self, raster_points):
-        rpb = raster_points.within(self.area.get_geometry, buffer_dist=3 * config.tin.grid_size.value)
-        if rpb is not None:
-            self.raster_points_buffer.append(rpb)
-        rpw = raster_points.within(self.area.get_geometry, buffer_dist=0)
-        if rpw is not None:
-            self.raster_points_within.append(rpw)
-
-    def create_mesh(self):
-        if self.raster_points_buffer:
-            mesh = Mesh(np.vstack(self.raster_points_buffer))
-        else:
-            mesh = Mesh(np.empty((0, 3)))
-        if self.raster_points_within:
-            mesh_clipped = mesh.clip_mesh_by_area(self.area, np.vstack(self.raster_points_within))
-        else:
-            mesh_clipped = mesh.clip_mesh_by_area(self.area, np.empty((0, 3)))
-        mesh_clipped_decimated = mesh_clipped.decimate(
-            max_height_error=config.tin.max_height_error, grid_size=config.tin.grid_size.value
-        )
-        logger.debug(
-            f"area consistency: {mesh_clipped_decimated.check_area_consistency(self.area.get_area, treshold=0.1)}"
-        )
-        return mesh_clipped_decimated
