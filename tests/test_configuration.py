@@ -11,7 +11,7 @@ class TestConfiguration:
 
     @pytest.fixture
     def config_paths(self):
-        base_path = Path(__file__).parent
+        base_path = Path(__file__).parent / "config"
         return {
             "base_config": base_path / "base_config.yml",
             "env_var_config": base_path / "env_config.yml",
