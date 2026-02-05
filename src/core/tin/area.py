@@ -1,174 +1,128 @@
 import logging
-
 import numpy as np
+import pyvista as pv
 import shapely
+from shapely import Point, MultiPoint
 from shapely.geometry.base import BaseGeometry
-from shapely.geometry.polygon import Polygon
+from shapely.geometry.polygon import LinearRing, Polygon
+from shapely.ops import orient
 
 from config.configuration import config
-from core.ifc.model.coordinates import Coordinates
-from core.tin.mesh import Mesh
+from core.tin.grid import Grid
 from core.tin.raster_points import RasterPoints
 
 logger = logging.getLogger(__name__)
 
 
 class Area:
-    """
-    Class representing a polygonal area including holes if present.
+    """Class representing a polygonal area including holes if present."""
 
-    NOTE
-    ----
-    Circular arcs are not supported. Therefore they must be segmented in advance.
-
-    ``ST_CurveToLine`` https://postgis.net/docs/ST_CurveToLine.html provides such
-    functionality. However, make sure to use ``flag 1`` to create symmetric output.
-    Otherwise the adjacent areas might overlap.
-
-    Parameters
-    ----------
-    polygon
-    origin :
-        Origin to reduce coordinate values
-    """
-
-    def __init__(self, polygon: BaseGeometry, project_origin: Coordinates):
+    def __init__(self, polygon: BaseGeometry):
         if not isinstance(polygon, shapely.Polygon):
             raise ValueError(f"{type(polygon).__name__} not supported")
-
-        self._geometry = self._check_polygon_definition(polygon)
-
-        project_origin = np.array(project_origin.to_tuple()[:2])
-        assert project_origin.shape == (2,)
-        if not np.allclose(project_origin, np.zeros((2,))):
-            self._reduce(project_origin)
-
+        self.polygon = orient(polygon, sign=1.0)
         self.raster_points_within = []
         self.raster_points_buffer = []
 
     def add_raster_points(self, raster_points: RasterPoints):
-        rpb = raster_points.within(self.get_geometry, 3 * config.tin.grid_size.value)
+        """Add raster points within and buffered around the polygon area."""
+        rpb = raster_points.within(self.polygon, 2 * config.tin.grid_size.value)
         if rpb is not None:
-            self.raster_points_buffer.append(rpb)
-        rpw = raster_points.within(self.get_geometry, 0)
+            self.raster_points_buffer.extend(rpb)
+        rpw = raster_points.within(self.polygon, -0.001)
         if rpw is not None:
-            self.raster_points_within.append(rpw)
+            self.raster_points_within.extend(rpw)
 
-    def create_mesh(self) -> Mesh:
-        if self.raster_points_buffer:
-            mesh = Mesh(np.vstack(self.raster_points_buffer))
-        else:
-            mesh = Mesh(np.empty((0, 3)))
+    def create_mesh(self) -> tuple[np.ndarray, np.ndarray]:
+        """Create a triangulated mesh from the polygon and raster points."""
+        if not self.raster_points_buffer:
+            raise Exception("No raster points found for area")
+
+        self.raster_points_buffer = np.vstack(self.raster_points_buffer)
         if self.raster_points_within:
-            mesh_clipped = mesh.clip_mesh_by_area(self, np.vstack(self.raster_points_within))
-        else:
-            mesh_clipped = mesh.clip_mesh_by_area(self, np.empty((0, 3)))
-        mesh_clipped_decimated = mesh_clipped.decimate(config.tin.max_height_error, config.tin.grid_size.value)
-        logger.debug(
-            f"area consistency: {mesh_clipped_decimated.check_area_consistency(self.get_area, 0.1)}"
+            self.raster_points_within = np.vstack(self.raster_points_within)
+
+        grid = Grid(self.raster_points_buffer)
+
+        exterior = self.densify_linearring_by_raster(self.polygon.exterior, grid)
+        interiors = [self.densify_linearring_by_raster(interior, grid) for interior in
+                     self.polygon.interiors]
+        points_within_2d = [arr[:2] for arr in self.raster_points_within]
+
+        vertices, faces = self.constrained_delaunay_2d(exterior, interiors, points_within_2d)
+
+        vertices_z = []
+        for vertex in vertices:
+            z = grid.get_height_for_vertex(np.array(vertex[:-1]))
+            vertices_z.append([vertex[0], vertex[1], z])
+        vertices_z = np.array(vertices_z)
+
+        return self.decimate(vertices_z, faces)
+
+    def densify_linearring_by_raster(self, linear_ring: LinearRing, grid: Grid) -> LinearRing:
+        """Add intersection points from the grid to the linear ring."""
+        coords = linear_ring.coords
+        points = []
+        for i in range(len(coords) - 1):
+            start, end = Point(coords[i]), Point(coords[i + 1])
+            intersection_points_sorted = grid.get_intersection_points_with_line(start, end)
+            points.append(start)
+            points.extend(intersection_points_sorted)
+
+        deduplicated_list = list({p.coords[0]: p for p in MultiPoint(points).geoms}.values())
+        return LinearRing(deduplicated_list)
+
+    def constrained_delaunay_2d(self, exterior: LinearRing, interiors: list[LinearRing],
+                                points_within: list[list[float]]):
+        """Perform constrained Delaunay triangulation with exterior, interiors, and interior points."""
+        def to_3d(pts: np.ndarray) -> np.ndarray:
+            return np.hstack([pts, np.zeros((pts.shape[0], 1))])
+
+        exterior_points_3d = to_3d(np.array(exterior.coords))
+        interiors_points_3d = [to_3d(np.array(interior.coords)) for interior in interiors]
+        points_within_3d = to_3d(np.array(points_within)) if len(points_within) > 0 else np.empty((0, 3))
+
+        all_points = np.vstack([exterior_points_3d] + interiors_points_3d + [points_within_3d])
+
+        lines = []
+        offset = 0
+        for loop in [exterior_points_3d] + interiors_points_3d:
+            n = len(loop)
+            for i in range(n):
+                lines.append([2, offset + i, offset + ((i + 1) % n)])
+            offset += n
+
+        edge_src = pv.PolyData(all_points[:offset])
+        edge_src.lines = np.hstack(lines)
+
+        mesh = pv.PolyData(all_points).delaunay_2d(edge_source=edge_src, tol=0)
+
+        faces_raw = mesh.faces.reshape(-1, 4)[:, 1:]
+        keep_indices = []
+
+        for i, face_idx in enumerate(faces_raw):
+            tri_coords = mesh.points[face_idx][:, :2]
+            tri_poly = Polygon(tri_coords)
+            if tri_poly.within(self.polygon.buffer(0.01)):
+                keep_indices.append(i)
+
+        final_mesh = mesh.extract_cells(keep_indices).extract_surface()
+        return final_mesh.points, final_mesh.faces.reshape(-1, 4)[:, 1:]
+
+    def decimate(self, vertices: np.ndarray, faces: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """Reduce mesh complexity while preserving topology."""
+        pv_faces = np.insert(faces, 0, 3, axis=1)
+        polydata = pv.PolyData(vertices, pv_faces)
+        max_normal_angle = min(2 * np.rad2deg(np.arctan(config.tin.max_height_error / config.tin.grid_size)), 45)
+        polydata.decimate_pro(
+            reduction=0.99,
+            feature_angle=max_normal_angle,
+            splitting=False,
+            preserve_topology=True,
+            boundary_vertex_deletion=False,
+            inplace=True
         )
-        return mesh_clipped_decimated
-
-    def _check_polygon_definition(self, poly: Polygon) -> Polygon:
-        """
-        Checks polygon definition and creates a geometry object.
-
-        According to WKT-Standard the exterior of a polygon (hull / shell)
-        has to be defined counter-clockwise (ccw) while present interiors (holes)
-        have to defined clockwise.
-
-        Parameters
-        ----------
-        poly :
-            Polygon to be checked
-
-        Returns
-        -------
-        _ :
-            Checked and possibly corrected polygon
-        """
-
-        # check exterior
-        shell = poly.exterior
-        if not shapely.is_ccw(shell):
-            shell = shapely.reverse(shell)
-
-        # check interiors if present
-        holes = []
-        if len(poly.interiors) > 0:
-            mask = [True if shapely.is_ccw(h) else False for h in poly.interiors]
-            if sum(mask) > 0:
-                # reverse linearring it is ccw defined
-                for i, m in enumerate(mask):
-                    if not m:
-                        holes.append(poly.interiors[i])
-                    else:
-                        holes.append(shapely.reverse(poly.interiors[i]))
-            else:
-                holes = poly.interiors
-
-        return shapely.Polygon(shell=shell, holes=holes)
-
-    def _reduce(self, origin: np.ndarray):
-        """Reduces coordinates by origin"""
-
-        shell = (np.stack(self._geometry.exterior.coords.xy).T - origin).tolist()
-
-        holes = []
-        for hole in [np.stack(geom.coords.xy).T for geom in self._geometry.interiors]:
-            holes.append((hole - origin).tolist())
-
-        self._geometry = shapely.geometry.Polygon(shell=shell, holes=holes)
-
-    @property
-    def get_geometry(self) -> shapely.geometry.Polygon:
-        return self._geometry
-
-    def get_exterior_points(self, exclude_last_point: bool = True) -> np.ndarray:
-        """
-        Returns vertices of exterior boundary
-
-        Parameters
-        ----------
-        exclude_last_point :
-            Whether to exclude last point (which is identical with first point)
-
-        Returns
-        -------
-        _ :
-        """
-        points = np.stack(self._geometry.exterior.coords.xy).T
-        if exclude_last_point:
-            points = points[:-1]
-
-        return points
-
-    @property
-    def n_interiors(self) -> int:
-        """Returns number boundaries (holes)"""
-        return len(self._geometry.interiors)
-
-    def get_interior_points(self, exclude_last_point: bool = True) -> list[np.ndarray]:
-        """
-        Returns vertices of all interior boundaries
-
-        Parameters
-        ----------
-        exclude_last_point :
-            Whether to exclude last point (which is identical with first point)
-
-        Returns
-        -------
-        _ :
-        """
-        points = [np.stack(geom.coords.xy).T for geom in self._geometry.interiors]
-
-        if exclude_last_point:
-            points = [p[:-1] for p in points]
-
-        return points
-
-    @property
-    def get_area(self) -> float:
-        """Returns area"""
-        return self._geometry.area
+        faces_flat = polydata.faces
+        faces_2d = faces_flat.reshape(-1, 4)
+        original_faces = faces_2d[:, 1:]
+        return polydata.points, original_faces

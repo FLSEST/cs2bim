@@ -2,11 +2,12 @@ import logging
 import math
 from typing import Any
 
-from shapely import wkt
+import numpy as np
+import shapely
+from shapely import wkt, Point
 from shapely.geometry import box
 from shapely.geometry.base import BaseGeometry
 
-from core.ifc.model.coordinates import Coordinates
 from core.tin.area import Area
 from core.tin.raster_points import RasterPoints
 
@@ -15,12 +16,22 @@ logger = logging.getLogger(__name__)
 
 class ProjectionData:
 
-    def __init__(self, element_row: dict[str, Any], project_origin: Coordinates):
+    def __init__(self, element_row: dict[str, Any], project_origin: Point):
         self.element_row = element_row
+        self.project_origin = project_origin
         self.areas = []
-        polygons = self.cut_polygon_if_large(element_row["wkt"])
-        for polygon in polygons:
-            self.areas.append(Area(polygon, project_origin))
+        polygon = wkt.loads(element_row["wkt"])
+        if polygon.geom_type == "Polygon":
+            polygons = self.cut_polygon_if_large(polygon)
+            for cut_polygon in polygons:
+                self.areas.append(Area(cut_polygon))
+        elif polygon.geom_type == "MultiPolygon":
+            for sub_polygon in polygon.geoms:
+                polygons = self.cut_polygon_if_large(sub_polygon)
+                for cut_polygon in polygons:
+                    self.areas.append(Area(cut_polygon))
+        else:
+            pass
 
     def add_raster_points(self, raster_points: RasterPoints):
         for area in self.areas:
@@ -32,8 +43,11 @@ class ProjectionData:
         indices_total = []
 
         for area in self.areas:
-            mesh = area.create_mesh()
-            points, faces = mesh.get_data()
+            points, faces = area.create_mesh()
+            if len(points) == 0 or len(faces) == 0:
+                logger.debug("No points or faces found for area %s", area.polygon)
+                continue
+            points = points - np.array([self.project_origin.x, self.project_origin.y, self.project_origin.z])
 
             for face in faces:
                 new_face = []
@@ -47,9 +61,7 @@ class ProjectionData:
 
         return points_total, indices_total
 
-    def cut_polygon_if_large(self, wkt_str: str, max_size_m: int = 1000) -> list[BaseGeometry]:
-        poly = wkt.loads(wkt_str)
-
+    def cut_polygon_if_large(self, poly: shapely.Polygon, max_size_m: int = 1000) -> list[BaseGeometry]:
         minx, miny, maxx, maxy = poly.bounds
         width = maxx - minx
         height = maxy - miny

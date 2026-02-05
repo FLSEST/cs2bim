@@ -10,8 +10,9 @@ from celery import Celery
 from celery.signals import worker_process_init
 from datetime import datetime
 
+from shapely import Point
+
 from config.configuration import config
-from core.ifc.model.coordinates import Coordinates
 from core.ifc.model.ifc_version import IfcVersion
 from core.model_generator import ModelGenerator
 from i18n.language import Language
@@ -62,11 +63,12 @@ def model_generation_task(self, ifc_version: str, name: str, polygon: str, proje
     try:
         logger.info(f"task {self.request.id}: Starting model generation")
         model_generator = ModelGenerator()
-        project_origin = Coordinates(*project_origin) if project_origin else None
+        project_origin = Point(project_origin) if project_origin else None
         model = model_generator.generate(IfcVersion(ifc_version), name, polygon, project_origin)
         language = Language(language) if language else None
         ifc_file = model.map_to_ifc(language)
         output_path = get_output_path(self.request.id)
+        logger.info("writing ifc")
         ifc_file.write(output_path)
         logger.info(f"task {self.request.id}: Model generation completed, file saved to {output_path}")
         return output_path

@@ -1,12 +1,14 @@
 import logging
-from core.processors.projection_data import ProjectionData
 from typing import Any
+
+from shapely import Point
+
 
 from config.configuration import config, ProjectionFeatureType, ProjectionAttributeConfig, ProjectionPropertyConfig
 from config.projection_source import ProjectionSource
-from core.ifc.model.coordinates import Coordinates
 from core.ifc.model.element import Element
-from core.ifc.model.projection import Projection
+from core.ifc.model.projection.projection import Projection
+from core.processors.projection_data import ProjectionData
 from core.tin.raster_points import RasterPoints
 from service.postgis_service import PostgisService
 from service.stac_service import STACService
@@ -20,7 +22,7 @@ class ProjectionProcessor:
         self.postgis_service = PostgisService()
         self.stac_service = STACService()
 
-    def process(self, polygon: str, project_origin: Coordinates) -> dict[str, list[Projection]]:
+    def process(self, polygon: str, project_origin: Point) -> dict[str, list[Projection]]:
         feature_types_by_key = {p.name: p for p in config.ifc.projection_feature_types}
         if not feature_types_by_key:
             logger.info("no projection feature types configured")
@@ -63,7 +65,7 @@ class ProjectionProcessor:
 
             for dtm_file in dtm_files:
                 logger.info(f"load and process dtm file: {dtm_file}")
-                dtm_points = RasterPoints(dtm_file, project_origin)
+                dtm_points = RasterPoints(dtm_file)
                 for index, projection_element_data in enumerate(projection_data):
                     logger.debug(f"calculate raster points for element {index + 1}/{len(sql_result)}")
                     projection_element_data.add_raster_points(dtm_points)
