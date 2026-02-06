@@ -1,28 +1,58 @@
-avbodenbedeckung: "MO_COPERTURA_DEL_SUOLO"
-avliegenschaft: "MU_BENE_IMMOBILE"
-chavliegenschaft: "CH_MU_BENE_IMMOBILE"
+# property sets
+cs2bimmetadatasourcesparameters: "CS2BIM_Metadata_SourcesParameters"
+cs2bimmetadatacrs: "CS2BIM_Metadata_CRS"
 
-complex: "COMPLEX"
-egid: "EGID"
+chgeodienstemetadaten: "CHGeodienste_metadati"
+chavgrundstueck: "CH_AV_terreno"
+chavgebaeudenummer: "CH_AV_numero_dell_edificio"
+chavbodenbedeckung: "CH_AV_copertura_del_suolo"
+chavobjektname: "CH_AV_nome_oggetto"
+chavgebaeudeadresse: "CH_AV_indirizzo_dell_edificio"
+
+# properties
+datasourcedtm: "DataSourceDTM"
+datasource3dbuildings: "DataSource3DBuildings"
+projectorigin: "ProjectOrigin"
+polygon: "Polygon"
+epsgcode: "EPSGCode"
+geodeticdatum: "GeodeticDatum"
+verticaldatum: "VerticalDatum"
+
+vollstaendigegeometrie: "GeometriaCompleta"
+
+gueltigkeit: "Validita"
+vollstaendigkeit: "Completezza"
+strassehausnummer: "ViaNumeroCivico"
+ortschaftsname: "NomeDellaLocalita"
+art: "Tipo"
+
 egrisegrid: "EGRIS_EGRID"
+egid: "EGID"
+nummer: "Numero"
 nbident: "NBIdent"
-userdefined: "USERDEFINED"
+erstellungjahr: "AnnoDiCreazione"
+erstellungmonat: "MeseDiCreazione"
 
-3dstadtmodell: "modello_3D"
-bodenbedeckung: "copertura_del_suolo"
-gebaeude: "edificio"
+# property values / attribute values / group values
+avliegenschaft: "MU_BENE_IMMOBILE"
+avbodenbedeckung: "MU_COPERTURA_DEL_SUOLO"
+avselbstrecht: "MU_DIRITTO_DISTINTO_PERMANENTE"
+avbergwerk: "MU_MINIERA"
+
+amtliche_vermessung: "misurazione ufficiale"
+liegenschaften: "beni immobili"
+3dstadtmodell: "modello 3D"
+
 liegenschaft: "bene_immobile"
-nummer: "numero"
+bodenbedeckung: "copertura_del_suolo"
+bergwerk: "miniera"
+selbstrecht: "diritto_distinto_permanente"
+gebaeude: "edificio"
 
-# Citygml
-
-erstellungjahr: "anno_di_creazione"
-erstellungmonat: "mese_di_creazione"
+userdefined: "USERDEFINED"
+complex: "COMPLEX"
 
 # Amtliche Vermessung
-
-amtliche_vermessung: "misurazione_ufficiale"
-
 befestigt: "rivestimento_duro"
 bahn: "ferrovia"
 flugplatz: "aeroporto"
@@ -59,3 +89,6 @@ gletscherfirn: "ghiacciaio_nevaio"
 geroellsand: "pietraia_sabbia"
 abbaudeponie: "cava_di_ghiaia_discarica"
 uebrigevegetationslose: "altra_senza_vegetazione"
+
+rechtskraeftig: "valido_legalmente"
+vollsteandig: "completo"
