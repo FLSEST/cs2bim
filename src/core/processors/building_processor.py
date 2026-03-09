@@ -38,7 +38,7 @@ class BuildingProcessor:
         city_gmls = self.stac_service.fetch_city_gml_assets(bounding_box)
         logger.info(f"fetched {len(city_gmls)} city gml files")
 
-        buildings_by_key = {}
+        buildings_by_key: dict[str, list[Building]] = {}
         for feature_type_key, feature_type in feature_types.items():
             logger.info(f"create {feature_type_key} feature type")
             with open(feature_type.sql_path, "r") as file:
