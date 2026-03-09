@@ -3,7 +3,7 @@ class PropertySet:
 
     def __init__(self, name: str):
         self.name = name
-        self.properties = {}
+        self.properties: dict[str, str] = {}
 
     def add_property(self, key: str, value: str):
         if not key in self.properties:
