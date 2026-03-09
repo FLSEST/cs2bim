@@ -90,15 +90,15 @@ class Model:
             location = Point(0, 0, 0)
         ifc_local_placement = ifc_file.create_ifc_local_placement(location)
 
-        group_mappings = {}
-        ifc_spatial_structures = {}
+        group_mappings: dict[str, list[entity_instance]] = {}
+        ifc_spatial_structures: dict[Element, tuple[entity_instance, list[entity_instance]]] = {}
 
         projections_config = {p.name: p for p in config.ifc.projection_feature_types}
         for feature_type_key, elements in self.projections.items():
             logger.info(f"build FeatureType {feature_type_key}")
             feature_type = projections_config[feature_type_key]
             ifc_style = ifc_file.create_ifc_surface_style(feature_type.color)
-            ifc_element_types = {}
+            ifc_element_types: dict[Element, tuple[entity_instance, list[entity_instance]]] = {}
             for element in elements:
                 ifc_element = element.map_to_ifc(ifc_file, feature_type.entity_mapping.entity, ifc_local_placement,
                                                  ifc_representation_sub_context, ifc_style)
@@ -149,7 +149,7 @@ class Model:
             logger.info(f"build FeatureType {feature_type_key}")
             feature_type = extrusion_config[feature_type_key]
             ifc_style = ifc_file.create_ifc_surface_style(feature_type.color)
-            ifc_element_types = {}
+            ifc_element_types: dict[Element, tuple[entity_instance, list[entity_instance]]] = {}
             for element in elements:
                 ifc_element = element.map_to_ifc(ifc_file, feature_type.entity_mapping.entity, ifc_local_placement,
                                                  ifc_representation_sub_context, ifc_style)
@@ -206,10 +206,10 @@ class Model:
         return ifc_spatial_structure
 
     def create_ifc_groups(self, ifc_file: IfcFile, group_mappings: dict[str, list[entity_instance]]):
-        ifc_groups = {}
+        ifc_groups: dict[str, entity_instance] = {}
         groups_config = {group.path: group for group in config.ifc.groups}
         for group_path, ifc_group_elements in group_mappings.items():
-            path = []
+            path: list[str] = []
             for group in group_path.split("."):
                 parent_group_path = ".".join(path)
                 path.append(group)
