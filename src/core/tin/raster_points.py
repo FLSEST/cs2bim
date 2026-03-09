@@ -1,6 +1,6 @@
 import numpy as np
 import shapely
-from shapely import Polygon, Point
+from shapely import Polygon
 
 
 class RasterPoints(object):
