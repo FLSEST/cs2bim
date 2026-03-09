@@ -11,7 +11,7 @@ class Tessellation:
 
     def map_to_ifc(self, ifc_file: IfcFile) -> entity_instance:
         vertices_dict = {}
-        vertices = []
+        vertices: list[Point] = []
         indices = []
         for triangle in self.faces:
             triangle_indices = []
