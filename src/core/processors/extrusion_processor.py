@@ -33,7 +33,7 @@ class ExtrusionProcessor:
             logger.info("no extrusion feature types configured")
             return {}
 
-        extrusions_by_key = {}
+        extrusions_by_key: dict[str, list[Extrusion]] = {}
         for feature_type_key, feature_type in feature_types.items():
             logger.info(f"create {feature_type_key} feature type")
             with open(feature_type.sql_path, "r") as file:
