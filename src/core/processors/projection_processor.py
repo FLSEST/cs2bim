@@ -51,7 +51,7 @@ class ProjectionProcessor:
         dtm_files = self.stac_service.fetch_dtm_assets(bounding_box, config.tin.grid_size.value)
         logger.info(f"fetched {len(dtm_files)} dtm files")
 
-        projections_by_key = {}
+        projections_by_key: dict[str, list[Projection]] = {}
         for feature_type_key, feature_type in feature_types_by_key.items():
             logger.info(f"create {feature_type_key} feature type")
             sql_result = sql_results_by_feature_type[feature_type_key]
