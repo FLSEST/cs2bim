@@ -104,7 +104,7 @@ class STACService:
         for feature in features:
             feature_datetime = parser.isoparse(feature["properties"]["datetime"])
             assets = list(feature["assets"].values())
-            filtered_assets = list(filter(asset_filter, assets)) if not asset_filter is None else assets
+            filtered_assets = list(filter(asset_filter, assets)) if asset_filter is not None else assets
             if filtered_assets:
                 if len(filtered_assets) != 1:
                     logger.error(f"filtering assets returned {len(filtered_assets)} results, expected 1.")
