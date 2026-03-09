@@ -113,7 +113,7 @@ class Area:
         """Reduce mesh complexity while preserving topology."""
         pv_faces = np.insert(faces, 0, 3, axis=1)
         polydata = pv.PolyData(vertices, pv_faces)
-        max_normal_angle = min(2 * np.rad2deg(np.arctan(config.tin.max_height_error / config.tin.grid_size)), 45)
+        max_normal_angle = min(2 * np.rad2deg(np.arctan(config.tin.max_height_error / config.tin.grid_size.value)), 45)
         polydata.decimate_pro(
             reduction=0.99,
             feature_angle=max_normal_angle,
