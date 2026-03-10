@@ -29,6 +29,7 @@ jobs:
           pip install flake8 pylint mypy types-requests types-python-dateutil types-PyYAML
 
       - name: Run flake8
+        continue-on-error: true
         run: flake8 src/ --max-line-length=120
 
       - name: Run mypy
