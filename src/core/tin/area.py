@@ -21,8 +21,8 @@ class Area:
         if not isinstance(polygon, shapely.Polygon):
             raise ValueError(f"{type(polygon).__name__} not supported")
         self.polygon = orient(polygon, sign=1.0)
-        self.raster_points_within = []
-        self.raster_points_buffer = []
+        self.raster_points_within: list = []
+        self.raster_points_buffer: list = []
 
     def add_raster_points(self, raster_points: RasterPoints):
         """Add raster points within and buffered around the polygon area."""
