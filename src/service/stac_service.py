@@ -36,7 +36,8 @@ class STACService:
         Returns:
            List of file paths to the extracted CityGML files.
         """
-        asset_filter = lambda asset: asset["type"] == "application/x.gml+zip"
+        def asset_filter(asset):
+            return asset["type"] == "application/x.gml+zip"
         hrefs = self.fetch_latest_assets(config.stac.building_items_url, bounding_box, asset_filter)
         return [self.fetch_and_extract_zip(href, "gml") for href in hrefs]
 
@@ -52,8 +53,9 @@ class STACService:
         Returns:
             List of file paths to the extracted DTM files.
         """
-        asset_filter = lambda asset: (asset["type"] == "application/x.ascii-xyz+zip" and (
-                asset.get("gsd") == grid_size or asset.get("eo:gsd") == grid_size))
+        def asset_filter(asset):
+            return (asset["type"] == "application/x.ascii-xyz+zip" and (
+                    asset.get("gsd") == grid_size or asset.get("eo:gsd") == grid_size))
         hrefs = self.fetch_latest_assets(config.stac.dtm_items_url, bounding_box, asset_filter)
         return [self.fetch_and_extract_zip(href, "xyz") for href in hrefs]
 
