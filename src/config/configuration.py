@@ -126,7 +126,7 @@ class ProjectionFeatureType(BaseModel):
     entity_type_mapping: Optional[ProjectionEntityTypeConfig] = Field(None,
                                                                       description="Entity type mapping configuration for the projection. (Only supported for entities with TypeObject)")
     spatial_structure_mapping: ProjectionSpatialEntityConfig = Field(
-        default_factory=lambda: ProjectionSpatialEntityConfig(),
+        default_factory=ProjectionSpatialEntityConfig,
         description="Spatial structure mapping for the projection")
     group_mapping: List[ProjectionConfigSource] = Field(default_factory=list, json_schema_extra={"default": []},
                                                         description="Group mappings for the projection feature type")
@@ -212,7 +212,7 @@ class BuildingFeatureType(BaseModel):
                             description="XPath expression to extract EGID identifier from city gml building entities")
     entity_mapping: BuildingEntityConfig = Field(..., description="Entity mapping configuration for the building")
     spatial_structure_mapping: BuildingSpatialEntityConfig = Field(
-        default_factory=lambda: BuildingSpatialEntityConfig(),
+        default_factory=BuildingSpatialEntityConfig,
         description="Spatial structure mapping for the building")
     group_mapping: List[BuildingSourceConfig] = Field(default_factory=list, json_schema_extra={"default": []},
                                                       description="Group mappings for the building feature type")
@@ -285,7 +285,7 @@ class ExtrusionFeatureType(BaseModel):
         ),
     )
     spatial_structure_mapping: ExtrusionSpatialEntityConfig = Field(
-        default_factory=lambda: ExtrusionSpatialEntityConfig(),
+        default_factory=ExtrusionSpatialEntityConfig,
         description="Spatial structure mapping for the projection")
     group_mapping: List[ExtrusionConfigSource] = Field(default_factory=list, json_schema_extra={"default": []},
                                                        description="Group mappings for the projection feature type")
