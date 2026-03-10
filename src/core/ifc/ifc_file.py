@@ -1,5 +1,6 @@
 """
-This module contains wrapper functions to simplify the process of building an ifc using ifcopenshells "create_entity" function.
+This module contains wrapper functions to simplify the process of building
+an ifc using ifcopenshells "create_entity" function.
 """
 
 import math
@@ -275,7 +276,10 @@ class IfcFile:
             "IfcAnnotation", GlobalId=guid.new(), ObjectPlacement=object_placement, Representation=representation
         )
 
-    def create_ifc_product(self, entity_type: str, object_placement: entity_instance, representation: entity_instance = None) -> entity_instance:
+    def create_ifc_product(
+            self, entity_type: str, object_placement: entity_instance,
+            representation: entity_instance = None,
+    ) -> entity_instance:
         if representation is None:
             return self.file.create_entity(entity_type, GlobalId=guid.new(), ObjectPlacement=object_placement)
         else:

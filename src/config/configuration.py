@@ -201,8 +201,13 @@ class BuildingFeatureType(BaseModel):
     """Feature type configuration for building feature type"""
 
     name: str = Field(..., description="Feature type name for the building")
-    sql_path: str = Field(...,
-                          description="Path to SQL definition for the building feature type. Must return at least a column named 'egid'.")
+    sql_path: str = Field(
+        ...,
+        description=(
+            "Path to SQL definition for the building feature type."
+            " Must return at least a column named 'egid'."
+        ),
+    )
     egid_xpath: str = Field(...,
                             description="XPath expression to extract EGID identifier from city gml building entities")
     entity_mapping: BuildingEntityConfig = Field(..., description="Entity mapping configuration for the building")
@@ -263,11 +268,22 @@ class ExtrusionFeatureType(BaseModel):
     """Feature type configuration for extrusion feature type"""
 
     name: str = Field(..., description="Feature type name for the extrusion")
-    sql_path: Optional[str] = Field(None,
-                                    description="Path to SQL definition for the extrusion feature type. Exact specification can be found in the configuration documentation.")
+    sql_path: Optional[str] = Field(
+        None,
+        description=(
+            "Path to SQL definition for the extrusion feature type."
+            " Exact specification can be found in the"
+            " configuration documentation."
+        ),
+    )
     entity_mapping: ExtrusionEntityConfig = Field(..., description="Entity mapping configuration for the extrusion")
-    entity_type_mapping: Optional[ExtrusionEntityTypeConfig] = Field(None,
-                                                                     description="Entity type mapping configuration for the extrusion. (Only supported for entities with TypeObject)")
+    entity_type_mapping: Optional[ExtrusionEntityTypeConfig] = Field(
+        None,
+        description=(
+            "Entity type mapping configuration for the extrusion."
+            " (Only supported for entities with TypeObject)"
+        ),
+    )
     spatial_structure_mapping: ExtrusionSpatialEntityConfig = Field(
         default_factory=lambda: ExtrusionSpatialEntityConfig(),
         description="Spatial structure mapping for the projection")
@@ -327,13 +343,18 @@ class IFCConfig(BaseModel):
     geo_referencing: GeoReferencing = Field(..., description="Georeferencing configuration for IFC")
     coordinate_reference_system: CoordinateReferenceSystem = Field(...,
                                                                    description="Coordinate reference system for IFC")
-    projection_feature_types: List[ProjectionFeatureType] = Field(default_factory=list,
-                                                                  json_schema_extra={"default": []},
-                                                                  description="List of projection feature type definitions")
+    projection_feature_types: List[ProjectionFeatureType] = Field(
+        default_factory=list,
+        json_schema_extra={"default": []},
+        description="List of projection feature type definitions",
+    )
     building_feature_types: List[BuildingFeatureType] = Field(default_factory=list, json_schema_extra={"default": []},
                                                               description="List of building feature type definitions")
-    extrusion_feature_types: List[ExtrusionFeatureType] = Field(default_factory=list, json_schema_extra={"default": []},
-                                                                description="List of extrusion feature type definitions")
+    extrusion_feature_types: List[ExtrusionFeatureType] = Field(
+        default_factory=list,
+        json_schema_extra={"default": []},
+        description="List of extrusion feature type definitions",
+    )
     groups: List[GroupConfig] = Field(default_factory=list, json_schema_extra={"default": []},
                                       description="List of group configurations for IFC")
 

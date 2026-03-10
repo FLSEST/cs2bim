@@ -19,8 +19,12 @@ class Projection(FeatureElement):
             p3 = Point(point_list[triangle[2]])
             self.triangles.append((p1, p2, p3))
 
-    def map_to_ifc(self, ifc_file: IfcFile, entity: str, placement_rel_to: entity_instance, ifc_representation_sub_context: entity_instance,
-                   ifc_style: entity_instance) -> entity_instance:
+    def map_to_ifc(
+            self, ifc_file: IfcFile, entity: str,
+            placement_rel_to: entity_instance,
+            ifc_representation_sub_context: entity_instance,
+            ifc_style: entity_instance,
+    ) -> entity_instance:
         tessellation = Tessellation(self.triangles)
         ifc_face_set = tessellation.map_to_ifc(ifc_file)
         ifc_product_definition_shape = ifc_file.create_ifc_product_definition_shape(ifc_representation_sub_context,

@@ -14,7 +14,11 @@ class PostgisService:
 
     def __init__(self):
         self.connection = psycopg2.connect(
-            f"dbname = {config.db.dbname} user = {config.db.user} host = {config.db.host} password = {config.db.password} port = {config.db.port}"
+            f"dbname = {config.db.dbname}"
+            f" user = {config.db.user}"
+            f" host = {config.db.host}"
+            f" password = {config.db.password}"
+            f" port = {config.db.port}"
         )
 
     def fetch_feature_type_elements(self, sql: str, polygon: str) -> list[dict[str, Any]]:

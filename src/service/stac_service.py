@@ -80,8 +80,11 @@ class STACService:
         features = resp.json().get("features", [])
         return features
 
-    def fetch_latest_assets(self, stac_collection_items_url: str, bounding_box: BoundingBox, asset_filter: Callable) -> \
-            list[str]:
+    def fetch_latest_assets(
+            self, stac_collection_items_url: str,
+            bounding_box: BoundingBox,
+            asset_filter: Callable,
+    ) -> list[str]:
         """
         Retrieves the latest version of filtered assets from STAC features intersecting the bounding box.
 
