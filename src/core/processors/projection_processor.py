@@ -70,7 +70,7 @@ class ProjectionProcessor:
                 for index, projection_element_data in enumerate(projection_data):
                     logger.debug(f"calculate raster points for element {index + 1}/{len(sql_result)}")
                     projection_element_data.add_raster_points(dtm_points)
-            logger.info(f"finished processing dtm files")
+            logger.info("finished processing dtm files")
 
             logger.info(f"create meshes for {feature_type_key} elements")
             for index, projection_element_data in enumerate(projection_data):
