@@ -33,7 +33,7 @@ class BuildingProcessor:
             logger.info("no building feature types configured")
             return {}
 
-        logger.info(f"fetch city gml files")
+        logger.info("fetch city gml files")
         bounding_box = BoundingBox.from_wkts([polygon])
         city_gmls = self.stac_service.fetch_city_gml_assets(bounding_box)
         logger.info(f"fetched {len(city_gmls)} city gml files")
@@ -63,7 +63,7 @@ class BuildingProcessor:
                                 if not feature_type_key in buildings_by_key:
                                     buildings_by_key[feature_type_key] = []
                                 buildings_by_key[feature_type_key].append(building)
-                                logger.debug(f"finished processing building")
+                                logger.debug("finished processing building")
                         building_gml.clear()
 
                         while building_gml.getprevious() is not None:
@@ -76,7 +76,7 @@ class BuildingProcessor:
         self.add_attributes(building, building_config.entity_mapping.attributes, building_gml, element_row)
         self.add_properties(building, building_config.entity_mapping.properties, building_gml, element_row)
         self.add_groups(building, building_config, building_gml, element_row)
-        logger.debug(f"start processing building parts")
+        logger.debug("start processing building parts")
         for building_part_config in building_config.entity_mapping.building_parts:
             geometry_mapping = building_part_config.geometry_mapping
             geometry_gmls = building_gml.xpath(geometry_mapping.xpath, namespaces=namespace)
