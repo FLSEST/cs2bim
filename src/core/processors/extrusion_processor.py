@@ -36,7 +36,7 @@ class ExtrusionProcessor:
         extrusions_by_key: dict[str, list[Extrusion]] = {}
         for feature_type_key, feature_type in feature_types.items():
             logger.info(f"create {feature_type_key} feature type")
-            with open(feature_type.sql_path, "r") as file:
+            with open(feature_type.sql_path, "r", encoding="utf-8") as file:
                 sql = file.read()
             sql_result = self.postgis_service.fetch_feature_type_elements(sql, polygon)
 
