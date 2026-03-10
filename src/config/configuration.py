@@ -373,7 +373,7 @@ class Configuration(BaseModel):
             FileNotFoundError: If the configuration file does not exist at the given path.
             ValidationError: If the YAML content does not conform to the expected schema.
         """
-        text = Path(path).read_text()
+        text = Path(path).read_text(encoding="utf-8")
         expanded = os.path.expandvars(text)
         return parse_yaml_raw_as(cls, expanded)
 
