@@ -73,13 +73,15 @@ async def generate_model(request_data: GenerateModelRequest):
         except ValueError:
             raise HTTPException(
                 status_code=422,
-                detail="PROJECT_ORIGIN must contain only numbers in the format"
-                       " 'float,float,float' (e.g., 0.0,0.0,0.0).")
+                detail="PROJECT_ORIGIN must contain only numbers in the"
+                       " format 'float,float,float' (e.g., 0.0,0.0,0.0).",
+            )
         if len(project_origin) != 3:
             raise HTTPException(
                 status_code=422,
                 detail="PROJECT_ORIGIN must contain exactly three values"
-                       " separated by commas (e.g., 0.0,0.0,0.0).")
+                       " separated by commas (e.g., 0.0,0.0,0.0).",
+            )
     try:
         geom = wkt.loads(polygon)
         if not isinstance(geom, Polygon):
