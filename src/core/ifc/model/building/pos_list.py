@@ -19,4 +19,4 @@ class PosList:
         for i in range(0, len(coords) - 3, 3):
             self.coordinates.append(
                 Point(float(coords[i] - project_origin.x), float(coords[i + 1] - project_origin.y),
-                            float(coords[i + 2] - project_origin.z)))
+                      float(coords[i + 2] - project_origin.z)))

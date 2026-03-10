@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 class Egg(CrossSection):
     def __init__(self, width: float, num_points: int = 12):
-        if width <= 0: raise ValueError("Width must be a positive number.")
+        if width <= 0:
+            raise ValueError("Width must be a positive number.")
 
         self.W, self.H = width, width * 1.5
         rx = self.W / 2

@@ -6,9 +6,8 @@ class FeatureElement(Element):
     def __init__(self):
         super().__init__()
         self.element_type = None
-        self.spatial_structure =  None
+        self.spatial_structure = None
         self.groups = []
-
 
     def add_group(self, name: str):
         if name not in self.groups:

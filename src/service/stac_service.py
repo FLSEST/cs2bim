@@ -81,7 +81,7 @@ class STACService:
         return features
 
     def fetch_latest_assets(self, stac_collection_items_url: str, bounding_box: BoundingBox, asset_filter: Callable) -> \
-    list[str]:
+            list[str]:
         """
         Retrieves the latest version of filtered assets from STAC features intersecting the bounding box.
 

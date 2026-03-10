@@ -19,7 +19,7 @@ class CompositeSurface:
             self.polygons.append(polygon)
 
     def create_ifc_indexed_polygonal_faces(self, ifc_file: IfcFile, coordinates: dict[tuple, int]) -> list[
-        entity_instance]:
+            entity_instance]:
         ifc_faces = [polygon.create_ifc_indexed_polygonal_face(ifc_file, coordinates) for polygon in self.polygons]
         return ifc_faces
 
