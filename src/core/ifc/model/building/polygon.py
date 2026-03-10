@@ -27,7 +27,7 @@ class Polygon:
                                           coordinates: dict[tuple, int]) -> entity_instance:
         exterior_indices = []
         for vertex in self.exterior.coordinates:
-            if not vertex in coordinates:
+            if vertex not in coordinates:
                 coordinates[vertex] = len(coordinates) + 1
             exterior_indices.append(coordinates[vertex])
 
