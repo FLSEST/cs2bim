@@ -5,6 +5,7 @@ __pycache__
 /cache
 /ifc
 /logs
+.qa-venv/
 
 # files
 *.stl
