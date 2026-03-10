@@ -33,7 +33,7 @@ class ProjectionProcessor:
         sql_results_by_feature_type = {}
         for feature_type_key, feature_type in feature_types_by_key.items():
             logger.info(f"fetch {feature_type_key}")
-            with open(feature_type.sql_path, "r") as file:
+            with open(feature_type.sql_path, "r", encoding="utf-8") as file:
                 sql = file.read()
             sql_result = self.postgis_service.fetch_feature_type_elements(sql, polygon)
             sql_results_by_feature_type[feature_type_key] = sql_result
