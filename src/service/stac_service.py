@@ -3,7 +3,7 @@ import os
 import requests
 from dateutil import parser
 from io import BytesIO
-from typing import Callable
+from typing import Any, Callable
 from zipfile import ZipFile
 
 from config.configuration import config
@@ -98,7 +98,7 @@ class STACService:
         """
 
         feature_assets = {}
-        feature_datetimes = {}
+        feature_datetimes: dict[str, Any] = {}
 
         features = self.fetch_features(stac_collection_items_url, bounding_box)
         for feature in features:
