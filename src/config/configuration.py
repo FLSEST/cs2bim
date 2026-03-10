@@ -121,11 +121,21 @@ class ProjectionFeatureType(BaseModel):
     """Feature type configuration for projection feature type"""
 
     name: str = Field(..., description="Feature type name for the projection")
-    sql_path: str = Field(...,
-                          description="Path to SQL definition for the projection feature type. Must return at least a column named 'wkt'.")
+    sql_path: str = Field(
+        ...,
+        description=(
+            "Path to SQL definition for the projection feature type."
+            " Must return at least a column named 'wkt'."
+        ),
+    )
     entity_mapping: ProjectionEntityConfig = Field(..., description="Entity mapping configuration for the projection")
-    entity_type_mapping: Optional[ProjectionEntityTypeConfig] = Field(None,
-                                                                      description="Entity type mapping configuration for the projection. (Only supported for entities with TypeObject)")
+    entity_type_mapping: Optional[ProjectionEntityTypeConfig] = Field(
+        None,
+        description=(
+            "Entity type mapping configuration for the projection."
+            " (Only supported for entities with TypeObject)"
+        ),
+    )
     spatial_structure_mapping: ProjectionSpatialEntityConfig = Field(
         default_factory=ProjectionSpatialEntityConfig,
         description="Spatial structure mapping for the projection")
@@ -194,8 +204,11 @@ class BuildingEntityTypeConfig(BaseModel):
 class BuildingEntityConfig(BuildingEntityTypeConfig):
     """Entity mapping configuration for building feature type"""
 
-    building_parts: List[BuildingPartConfig] = Field(default_factory=list, json_schema_extra={"default": []},
-                                                     description="List of building parts belonging to this building entity")
+    building_parts: List[BuildingPartConfig] = Field(
+        default_factory=list,
+        json_schema_extra={"default": []},
+        description="List of building parts belonging to this building entity",
+    )
 
 
 class BuildingFeatureType(BaseModel):
