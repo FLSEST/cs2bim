@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
+from typing import List, Optional
+
 from pydantic import BaseModel, model_validator, Field
 from pydantic_yaml import parse_yaml_raw_as
-from typing import List, Optional
 
 from config.building_source import BuildingSource
 from config.extrusion_source import ExtrusionSource
