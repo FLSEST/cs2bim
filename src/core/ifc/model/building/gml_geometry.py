@@ -12,9 +12,6 @@ class GmlGeometry(ABC):
     Abstract base class for GML (Geography Markup Language) geometry representations.
     """
 
-    def __init__(self):
-        pass
-
     @abstractmethod
     def from_gml(self, gml: XmlElement, project_origin: Point):
         """
