@@ -32,7 +32,7 @@ class VerticalExtrusion(Extrusion):
         if isinstance(self.area, Polygon) and not self.area.local:
             ifc_profile_def = ifc_file.create_ifc_arbitrary_closed_profile_def(self.area.points)
             self.start_point = translate(self.start_point, xoff=-self.start_point.x, yoff=-self.start_point.y, zoff=0)
-        elif isinstance(self.area, Egg) or isinstance(self.area, Polygon):
+        elif isinstance(self.area, (Egg, Polygon)):
             ifc_profile_def = ifc_file.create_ifc_arbitrary_closed_profile_def(self.area.points)
         elif isinstance(self.area, Rectangle):
             ifc_profile_def = ifc_file.create_ifc_rectangle_profile_def(self.area.width, self.area.height)
