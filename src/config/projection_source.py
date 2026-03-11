@@ -1,3 +1,4 @@
+"""Module defining projection source configuration."""
 from enum import Enum
 
 

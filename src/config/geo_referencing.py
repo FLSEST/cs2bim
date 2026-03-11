@@ -1,3 +1,4 @@
+"""Module defining geo-referencing configuration."""
 from enum import Enum
 
 

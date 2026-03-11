@@ -1,3 +1,4 @@
+"""Module defining the main application configuration."""
 import os
 from pathlib import Path
 from typing import List, Optional
