@@ -20,4 +20,4 @@ class PropertySet:
         return hash((self.name, tuple(sorted(self.properties.items()))))
 
     def __repr__(self):
-        return f"MyObject(name={self.name!r}, properties={self.properties!r})"
+        return f"PropertySet(name={self.name!r}, properties={self.properties!r})"
