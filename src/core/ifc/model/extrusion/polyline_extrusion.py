@@ -1,3 +1,4 @@
+"""Module defining polyline extrusion geometry."""
 import logging
 from ifcopenshell import entity_instance
 from shapely import Point
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class PolylineExtrusion(Extrusion):
+    """Represents a polyline-based extrusion geometry for IFC mapping."""
 
     def __init__(self, area: CrossSection, polyline: BaseGeometry):
         super().__init__()
@@ -25,6 +27,7 @@ class PolylineExtrusion(Extrusion):
 
     def map_to_ifc(self, ifc_file: IfcFile, entity: str, placement_rel_to: entity_instance,
                    ifc_representation_sub_context: entity_instance, ifc_style: entity_instance) -> entity_instance:
+        """Map polyline extrusion to an IFC representation."""
         ifc_polyline = ifc_file.create_ifc_polyline(self.points)
 
         if isinstance(self.area, Circle):

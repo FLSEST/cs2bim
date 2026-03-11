@@ -1,3 +1,4 @@
+"""Module defining the abstract Extrusion base class."""
 from abc import abstractmethod, ABC
 from ifcopenshell import entity_instance
 
@@ -6,8 +7,10 @@ from core.ifc.model.feature_element import FeatureElement
 
 
 class Extrusion(FeatureElement, ABC):
+    """Abstract base class for all extrusion geometry types."""
 
     @abstractmethod
     def map_to_ifc(self, ifc_file: IfcFile, entity: str, placement_rel_to: entity_instance,
                    ifc_representation_sub_context: entity_instance, ifc_style: entity_instance) -> entity_instance:
+        """Map extrusion geometry to an IFC representation."""
         raise NotImplementedError("map_to_ifc must be implemented by subclasses")
