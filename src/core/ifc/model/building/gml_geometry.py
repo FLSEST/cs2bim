@@ -1,3 +1,4 @@
+"""Module defining the abstract GML geometry base class."""
 from abc import ABC, abstractmethod
 from ifcopenshell import entity_instance
 from lxml.etree import _Element as XmlElement

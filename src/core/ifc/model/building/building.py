@@ -1,3 +1,4 @@
+"""Module defining building and building part IFC representations."""
 from ifcopenshell import entity_instance
 from shapely import Point
 
@@ -7,6 +8,7 @@ from core.ifc.model.feature_element import FeatureElement
 
 
 class BuildingPart:
+    """Represents a single part of a building for IFC mapping."""
 
     def __init__(self, entity: str, gml_geometry: GmlGeometry, color):
         super().__init__()
@@ -16,6 +18,7 @@ class BuildingPart:
 
     def map_to_ifc(self, ifc_file: IfcFile, placement_rel_to: entity_instance,
                    ifc_representation_sub_context: entity_instance) -> entity_instance:
+        """Map building part to an IFC representation."""
         ifc_style = ifc_file.create_ifc_surface_style(self.color)
         ifc_product_definition_shape = self.gml_geometry.map_to_ifc(ifc_file, ifc_style, ifc_representation_sub_context)
         return self.create_ifc_element(ifc_file, placement_rel_to, ifc_product_definition_shape)
@@ -28,16 +31,19 @@ class BuildingPart:
 
 
 class Building(FeatureElement):
+    """Represents a complete building for IFC mapping."""
 
     def __init__(self):
         super().__init__()
         self.building_parts: list[BuildingPart] = []
 
     def add_building_part(self, building_part: BuildingPart):
+        """Add a building part to this building."""
         self.building_parts.append(building_part)
 
     def map_to_ifc(self, ifc_file: IfcFile, placement_rel_to: entity_instance,
                    ifc_representation_sub_context: entity_instance) -> entity_instance:
+        """Map building to an IFC representation."""
         ifc_local_placement = ifc_file.create_relative_ifc_local_placement(placement_rel_to, Point(0, 0, 0))
         ifc_building = ifc_file.create_ifc_product("IfcBuilding", ifc_local_placement)
         ifc_elements = [building_part.map_to_ifc(ifc_file, ifc_local_placement, ifc_representation_sub_context) for

@@ -1,3 +1,4 @@
+"""Module defining multi-surface geometry for buildings."""
 from ifcopenshell import entity_instance
 from lxml.etree import _Element as XmlElement
 from shapely import Point
@@ -10,12 +11,15 @@ from core.ifc.model.building.polygon import Polygon
 
 
 class MultiSurface(GmlGeometry):
+    """Represents a multi-surface geometry parsed from GML."""
+
     def __init__(self):
         super().__init__()
         self.polygons: list[Polygon] = []
         self.composite_surfaces = []
 
     def from_gml(self, gml: XmlElement, project_origin: Point):
+        """Create a MultiSurface from a GML element."""
         for polygon_gml in gml.xpath("./gml:surfaceMember/gml:Polygon | ./gml:surfaceMembers/gml:Polygon",
                                      namespaces=namespace):
             polygon = Polygon()
@@ -31,6 +35,7 @@ class MultiSurface(GmlGeometry):
 
     def map_to_ifc(self, ifc_file: IfcFile, ifc_style: entity_instance,
                    ifc_representation_sub_context: entity_instance) -> entity_instance:
+        """Map multi-surface to an IFC representation."""
         ifc_face_sets = []
         vertices: dict[Point, int] = {}
         ifc_faces = [polygon.create_ifc_indexed_polygonal_face(ifc_file, vertices) for polygon in self.polygons]
