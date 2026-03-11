@@ -39,7 +39,7 @@ class VerticalExtrusion(Extrusion):
         elif isinstance(self.area, Circle):
             ifc_profile_def = ifc_file.create_ifc_circle_profile_def(self.area.radius)
         else:
-            raise Exception(
+            raise NotImplementedError(
                 f"simple extrusion building step for area class {type(self.area)} not implemented")
 
         ifc_geometry = ifc_file.create_ifc_extruded_area_solid(ifc_profile_def, self.start_point,

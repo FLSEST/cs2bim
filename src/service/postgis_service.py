@@ -41,7 +41,7 @@ class PostgisService:
         if cur.description is not None:
             column_names = [desc[0] for desc in cur.description]
         else:
-            raise Exception("Invalid sql")
+            raise ValueError("Invalid sql")
         result = []
         for row in rows:
             result.append(dict(zip(column_names, row)))

@@ -78,7 +78,7 @@ class STACService:
         resp = requests.get(stac_collection_items_url, params={"bbox": bbox_str}, timeout=60)
         logger.debug(f"STAC items request: {resp.url}")
         if resp.status_code != 200:
-            raise Exception(f"requesting items failed with HTTP error {resp.status_code}")
+            raise RuntimeError(f"requesting items failed with HTTP error {resp.status_code}")
         features = resp.json().get("features", [])
         return features
 
@@ -113,7 +113,7 @@ class STACService:
             if filtered_assets:
                 if len(filtered_assets) != 1:
                     logger.error(f"filtering assets returned {len(filtered_assets)} results, expected 1.")
-                    raise Exception("filtering assets returned more than one result")
+                    raise RuntimeError("filtering assets returned more than one result")
                 bbox = str(feature["bbox"])
                 if bbox not in feature_assets or feature_datetime > feature_datetimes[bbox]:
                     feature_assets[bbox] = filtered_assets[0]
@@ -146,7 +146,7 @@ class STACService:
 
         resp = requests.get(zip_href, timeout=60)
         if resp.status_code != 200:
-            raise Exception(f"requesting assets failed with HTTP error {resp.status_code}")
+            raise RuntimeError(f"requesting assets failed with HTTP error {resp.status_code}")
 
         with ZipFile(BytesIO(resp.content)) as zip_file:
             all_files = zip_file.namelist()

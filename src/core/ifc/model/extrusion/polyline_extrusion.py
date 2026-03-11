@@ -38,7 +38,7 @@ class PolylineExtrusion(Extrusion):
             elif isinstance(self.area, Rectangle):
                 ifc_profile_def = ifc_file.create_ifc_rectangle_profile_def(self.area.width, self.area.height)
             else:
-                raise Exception(
+                raise NotImplementedError(
                     f"complex extrusion building step for area class {type(self.area)} not implemented")
             ifc_geometry = ifc_file.create_ifc_fixed_reference_swept_area_solid(ifc_profile_def, ifc_polyline)
 
