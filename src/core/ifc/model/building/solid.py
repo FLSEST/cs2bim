@@ -1,3 +1,4 @@
+"""Module defining solid geometry for buildings."""
 from ifcopenshell import entity_instance
 from lxml.etree import _Element as XmlElement
 from shapely import Point
@@ -9,12 +10,15 @@ from core.ifc.model.building.namespace import namespace
 
 
 class Solid(GmlGeometry):
+    """Represents a solid geometry parsed from GML for IFC mapping."""
+
     def __init__(self):
         super().__init__()
         self.exterior = CompositeSurface()
         self.interior = []
 
     def from_gml(self, gml: XmlElement, project_origin: Point):
+        """Create a Solid instance from a GML element."""
         surface_exterior = gml.xpath("./gml:exterior/gml:CompositeSurface", namespaces=namespace)
         if len(surface_exterior) != 1:
             raise ValueError("Solid expects exactly one exterior composite surface")
@@ -27,6 +31,7 @@ class Solid(GmlGeometry):
 
     def map_to_ifc(self, ifc_file: IfcFile, ifc_style: entity_instance,
                    ifc_representation_sub_context: entity_instance) -> entity_instance:
+        """Map solid to an IFC representation."""
         exterior_ifc_faces = self.exterior.create_ifc_faces(ifc_file)
         interior_ifc_faces_list = []
         for composite_surface in self.interior:

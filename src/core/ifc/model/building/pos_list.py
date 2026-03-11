@@ -1,14 +1,18 @@
+"""Module defining GML position list parsing."""
 from lxml.etree import _Element as XmlElement
 
 from shapely import Point
 
 
 class PosList:
+    """Represents a GML position list of 3D coordinates."""
+
     def __init__(self):
         super().__init__()
         self.coordinates = []
 
     def from_gml(self, gml: XmlElement, project_origin: Point):
+        """Create a PosList from a GML element."""
         coords = list(map(float, gml.text.split()))
         if len(coords) % 3 != 0:
             raise ValueError("PosList is not 3 dimensional")

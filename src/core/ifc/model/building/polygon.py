@@ -1,3 +1,4 @@
+"""Module defining polygon geometry for building surfaces."""
 from ifcopenshell import entity_instance
 from lxml.etree import _Element as XmlElement
 from shapely import Point
@@ -8,12 +9,15 @@ from core.ifc.model.building.pos_list import PosList
 
 
 class Polygon:
+    """Represents a polygon geometry parsed from GML for IFC mapping."""
+
     def __init__(self):
         super().__init__()
         self.exterior = PosList()
         self.interior = []
 
     def from_gml(self, gml: XmlElement, project_origin: Point):
+        """Create a Polygon instance from a GML element."""
         pos_list_exterior = gml.xpath("./gml:exterior//gml:posList", namespaces=namespace)
         if len(pos_list_exterior) != 1:
             raise ValueError("Polygon expects exactly one exterior posList")
@@ -25,6 +29,7 @@ class Polygon:
 
     def create_ifc_indexed_polygonal_face(self, ifc_file: IfcFile,
                                           coordinates: dict[tuple, int]) -> entity_instance:
+        """Create an indexed IFC face from the polygon geometry."""
         exterior_indices = []
         for vertex in self.exterior.coordinates:
             if vertex not in coordinates:
@@ -47,6 +52,7 @@ class Polygon:
             return ifc_file.create_ifc_indexed_polygonal_face(exterior_indices)
 
     def create_ifc_face(self, ifc_file: IfcFile) -> entity_instance:
+        """Create an IFC face from the polygon geometry."""
         vertex_dict = {}
         vertices = []
         for vertex in self.exterior.coordinates:

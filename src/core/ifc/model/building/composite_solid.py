@@ -1,3 +1,4 @@
+"""Module defining composite solid geometry for buildings."""
 from ifcopenshell import entity_instance
 from lxml.etree import _Element as XmlElement
 from shapely import Point
@@ -9,11 +10,14 @@ from core.ifc.model.building.solid import Solid
 
 
 class CompositeSolid(GmlGeometry):
+    """Represents a composite solid geometry parsed from GML."""
+
     def __init__(self):
         super().__init__()
         self.solids = []
 
     def from_gml(self, gml: XmlElement, project_origin: Point):
+        """Create a CompositeSolid from a GML element."""
         for solid_gml in gml.xpath("./gml:solidMember/gml:Solid", namespaces=namespace):
             solid = Solid()
             solid.from_gml(solid_gml, project_origin)
@@ -21,6 +25,7 @@ class CompositeSolid(GmlGeometry):
 
     def map_to_ifc(self, ifc_file: IfcFile, ifc_style: entity_instance,
                    ifc_representation_sub_context: entity_instance) -> entity_instance:
+        """Map composite solid to an IFC representation."""
         ifc_faceted_breps = [solid.map_to_ifc(ifc_file, ifc_style) for solid in self.solids]
         ifc_product_definition_shape = ifc_file.create_ifc_product_definition_shape(ifc_representation_sub_context,
                                                                                     "Brep", ifc_faceted_breps)

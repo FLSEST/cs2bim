@@ -1,3 +1,4 @@
+"""Module defining the Tessellation IFC mapping."""
 from ifcopenshell import entity_instance
 from shapely import Point
 
@@ -5,11 +6,13 @@ from core.ifc.ifc_file import IfcFile
 
 
 class Tessellation:
+    """Represents a tessellation geometry for IFC mapping."""
 
     def __init__(self, faces: list[tuple[Point, Point, Point]]):
         self.faces = faces
 
     def map_to_ifc(self, ifc_file: IfcFile) -> entity_instance:
+        """Map tessellation to an IFC representation."""
         vertices_dict = {}
         vertices: list[Point] = []
         indices = []

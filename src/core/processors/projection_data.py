@@ -30,8 +30,6 @@ class ProjectionData:
                 polygons = self.cut_polygon_if_large(sub_polygon)
                 for cut_polygon in polygons:
                     self.areas.append(Area(cut_polygon))
-        else:
-            pass
 
     def add_raster_points(self, raster_points: RasterPoints):
         for area in self.areas:
@@ -87,7 +85,5 @@ class ProjectionData:
                     cut_polys.append(inter)
                 elif inter.geom_type == "MultiPolygon":
                     cut_polys.extend(list(inter.geoms))
-                else:
-                    pass
 
         return cut_polys

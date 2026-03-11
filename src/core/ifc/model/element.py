@@ -21,7 +21,7 @@ class Element:
         if name not in self.attributes:
             self.attributes[name] = value
         else:
-            raise Exception(f"Attribute {name} already exists")
+            raise ValueError(f"Attribute {name} already exists")
 
     def set_ifc_properties(self, ifc_file: IfcFile, ifc_element: entity_instance):
         for property_set in self.property_sets.values():

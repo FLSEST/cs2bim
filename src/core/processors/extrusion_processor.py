@@ -46,7 +46,7 @@ class ExtrusionProcessor:
 
                 try:
                     cross_section_type = CrossSectionType[row["cross_section"]]
-                except Exception:
+                except KeyError:
                     logger.warning(f"no valid cross section type {row['cross_section']}")
                     continue
 

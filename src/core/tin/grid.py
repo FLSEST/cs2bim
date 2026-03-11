@@ -69,7 +69,7 @@ class Grid:
         i11 = self.grid[j + 1, i + 1]
 
         if i00 == -1 or i10 == -1 or i01 == -1 or i11 == -1:
-            raise Exception(f"raster points missing for vertex {vertex}")
+            raise RuntimeError(f"raster points missing for vertex {vertex}")
 
         p00 = self.raster_points[i00]
         p10 = self.raster_points[i10]

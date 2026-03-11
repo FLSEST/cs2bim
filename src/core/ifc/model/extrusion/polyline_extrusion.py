@@ -1,3 +1,4 @@
+"""Module defining polyline extrusion geometry."""
 import logging
 from ifcopenshell import entity_instance
 from shapely import Point
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class PolylineExtrusion(Extrusion):
+    """Represents a polyline-based extrusion geometry for IFC mapping."""
 
     def __init__(self, area: CrossSection, polyline: BaseGeometry):
         super().__init__()
@@ -25,6 +27,7 @@ class PolylineExtrusion(Extrusion):
 
     def map_to_ifc(self, ifc_file: IfcFile, entity: str, placement_rel_to: entity_instance,
                    ifc_representation_sub_context: entity_instance, ifc_style: entity_instance) -> entity_instance:
+        """Map polyline extrusion to an IFC representation."""
         ifc_polyline = ifc_file.create_ifc_polyline(self.points)
 
         if isinstance(self.area, Circle):
@@ -35,7 +38,7 @@ class PolylineExtrusion(Extrusion):
             elif isinstance(self.area, Rectangle):
                 ifc_profile_def = ifc_file.create_ifc_rectangle_profile_def(self.area.width, self.area.height)
             else:
-                raise Exception(
+                raise NotImplementedError(
                     f"complex extrusion building step for area class {type(self.area)} not implemented")
             ifc_geometry = ifc_file.create_ifc_fixed_reference_swept_area_solid(ifc_profile_def, ifc_polyline)
 

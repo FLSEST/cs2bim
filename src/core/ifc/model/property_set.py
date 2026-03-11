@@ -9,7 +9,7 @@ class PropertySet:
         if key not in self.properties:
             self.properties[key] = value
         else:
-            raise Exception(f"Property {key} already exists")
+            raise ValueError(f"Property {key} already exists")
 
     def __eq__(self, other):
         if not isinstance(other, PropertySet):
@@ -20,4 +20,4 @@ class PropertySet:
         return hash((self.name, tuple(sorted(self.properties.items()))))
 
     def __repr__(self):
-        return f"MyObject(name={self.name!r}, properties={self.properties!r})"
+        return f"PropertySet(name={self.name!r}, properties={self.properties!r})"
