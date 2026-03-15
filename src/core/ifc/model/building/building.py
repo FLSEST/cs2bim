@@ -11,6 +11,7 @@ class BuildingPart:
     """Represents a single part of a building for IFC mapping."""
 
     def __init__(self, entity: str, gml_geometry: GmlGeometry, color):
+        """Initialize a BuildingPart with an IFC entity type, GML geometry, and display color."""
         super().__init__()
         self.color = color
         self.gml_geometry = gml_geometry
@@ -25,6 +26,7 @@ class BuildingPart:
 
     def create_ifc_element(self, ifc_file: IfcFile, placement_rel_to: entity_instance,
                            product_definition_shape: entity_instance) -> entity_instance:
+        """Create the IFC product entity for this building part with a relative local placement."""
         ifc_local_placement = ifc_file.create_relative_ifc_local_placement(placement_rel_to, Point(0, 0, 0))
         ifc_element = ifc_file.create_ifc_product(self.entity, ifc_local_placement, product_definition_shape)
         return ifc_element
@@ -34,6 +36,7 @@ class Building(FeatureElement):
     """Represents a complete building for IFC mapping."""
 
     def __init__(self):
+        """Initialize a Building with an empty list of building parts."""
         super().__init__()
         self.building_parts: list[BuildingPart] = []
 

@@ -1,3 +1,4 @@
+"""Module for processing IFC extrusion elements from PostGIS data."""
 import logging
 from shapely import Point, wkb
 from shapely.affinity import translate
@@ -23,11 +24,14 @@ logger = logging.getLogger(__name__)
 
 
 class ExtrusionProcessor:
+    """Fetches and processes extrusion feature elements from PostGIS, building typed 3D solids."""
 
     def __init__(self):
+        """Initialize the processor with a PostGIS service client."""
         self.postgis_service = PostgisService()
 
     def process(self, polygon: str, project_origin: Point) -> dict[str, list[Extrusion]]:
+        """Fetch extrusion data from PostGIS and return extrusions grouped by feature type."""
         feature_types = {b.name: b for b in config.ifc.extrusion_feature_types}
         if not feature_types:
             logger.info("no extrusion feature types configured")
@@ -108,6 +112,7 @@ class ExtrusionProcessor:
         return extrusions_by_key
 
     def create_simple_section(self, row: dict[str, Any], section_class):
+        """Create a simple circular or egg-shaped cross section from a row's width value."""
         width = row["width"]
         if not width:
             logger.warning(f"Mandatory 'width' missing for {section_class.__name__}")
@@ -115,6 +120,7 @@ class ExtrusionProcessor:
         return section_class(width / 2)
 
     def create_rectangle(self, row: dict[str, Any]) -> Rectangle | None:
+        """Create a rectangular cross section from a row's width and height values."""
         width = row["width"]
         height = row["height"]
         if not width or not height:
@@ -123,6 +129,7 @@ class ExtrusionProcessor:
         return Rectangle(width, height)
 
     def create_polygon(self, row: dict[str, Any], local: bool) -> Polygon | None:
+        """Create a polygon cross section by decoding the WKB hex area from a result row."""
         polygon_hex = row["area"]
         if not polygon_hex:
             logger.warning("Mandatory 'area' data missing for Polygon")
@@ -137,6 +144,7 @@ class ExtrusionProcessor:
 
     def create_vertical_extrusion(self, row: dict[str, Any], cross_section: CrossSection,
                                   project_origin: Point) -> VerticalExtrusion | None:
+        """Create a vertical extrusion between two WKB-encoded points, translated relative to the project origin."""
         start_hex = row["start_point"]
         end_hex = row["end_point"]
         orientation = row["orientation"] if "orientation" in row else None
@@ -155,6 +163,7 @@ class ExtrusionProcessor:
 
     def create_polyline_extrusion(self, row: dict[str, Any], cross_section: CrossSection,
                                   project_origin: Point) -> PolylineExtrusion | None:
+        """Create a polyline extrusion from a WKB-encoded polyline, translated relative to the project origin."""
         polyline_hex = row["polyline"]
         if not polyline_hex:
             logger.warning("Missing 'polyline' data for PolylineExtrusion")
@@ -169,6 +178,7 @@ class ExtrusionProcessor:
 
     def add_attributes(self, element: Element, attributes: list[ExtrusionAttributeConfig],
                        element_row: dict[str, Any]):
+        """Set attributes on an element from SQL result row or static values."""
         for attribute in attributes:
             if attribute.source.type == ExtrusionSource.SQL:
                 if attribute.source.expression in element_row:
@@ -177,6 +187,7 @@ class ExtrusionProcessor:
                 element.add_attribute(attribute.attribute, attribute.source.expression)
 
     def add_properties(self, element: Element, properties: list[ExtrusionPropertyConfig], element_row: dict[str, Any]):
+        """Set property set values on an element from SQL result row or static values."""
         for p in properties:
             if p.source.type == ExtrusionSource.SQL:
                 if p.source.expression in element_row:
@@ -185,6 +196,7 @@ class ExtrusionProcessor:
                 element.add_property(p.property_set, p.property, p.source.expression)
 
     def add_groups(self, element: FeatureElement, feature_type: ExtrusionFeatureType, element_row: dict[str, Any]):
+        """Assign group memberships to an extrusion element based on feature type group mappings."""
         for group_mapping in feature_type.group_mapping:
             if group_mapping.type == ExtrusionSource.SQL:
                 element.add_group(element_row[group_mapping.expression])
