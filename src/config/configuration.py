@@ -477,8 +477,7 @@ class IFCConfig(BaseModel):
     project_name: str = Field(..., description="Project name in IFC")
     geo_referencing: GeoReferencing = Field(..., description="Georeferencing configuration for IFC")
     coordinate_reference_system: CoordinateReferenceSystem = Field(
-        ...,
-        description="Coordinate reference system for IFC",
+        ..., description="Coordinate reference system for IFC"
     )
     projection_feature_types: List[ProjectionFeatureType] = Field(
         default_factory=list,
@@ -513,12 +512,10 @@ class Configuration(BaseModel):
     environment variable expansion.
     """
     logging_level: str = Field(
-        ...,
-        description="Logging level for the application (e.g., DEBUG, INFO, WARNING)",
+        ..., description="Logging level for the application (e.g., DEBUG, INFO, WARNING)"
     )
     i18n: Optional[I18nConfig] = Field(
-        None,
-        description="Internationalization (i18n) configuration",
+        None, description="Internationalization (i18n) configuration"
     )
     redis: RedisConfig = Field(..., description="Redis configuration")
     db: DBConfig = Field(..., description="Database configuration")
@@ -531,8 +528,7 @@ class Configuration(BaseModel):
         description="TIN (Triangulated Irregular Network) generation configuration",
     )
     ifc: IFCConfig = Field(
-        ...,
-        description="IFC (Industry Foundation Classes) export configuration",
+        ..., description="IFC (Industry Foundation Classes) export configuration"
     )
 
     @classmethod
