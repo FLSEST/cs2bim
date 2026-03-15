@@ -1,3 +1,4 @@
+"""Module defining the IfcVersion enumeration for supported IFC schema versions."""
 from enum import Enum
 
 
