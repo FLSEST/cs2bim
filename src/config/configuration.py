@@ -356,15 +356,19 @@ class IFCConfig(BaseModel):
     application_name: str = Field(..., description="Name of the application generating IFC")
     project_name: str = Field(..., description="Project name in IFC")
     geo_referencing: GeoReferencing = Field(..., description="Georeferencing configuration for IFC")
-    coordinate_reference_system: CoordinateReferenceSystem = Field(...,
-                                                                   description="Coordinate reference system for IFC")
+    coordinate_reference_system: CoordinateReferenceSystem = Field(
+        ..., description="Coordinate reference system for IFC"
+    )
     projection_feature_types: List[ProjectionFeatureType] = Field(
         default_factory=list,
         json_schema_extra={"default": []},
         description="List of projection feature type definitions",
     )
-    building_feature_types: List[BuildingFeatureType] = Field(default_factory=list, json_schema_extra={"default": []},
-                                                              description="List of building feature type definitions")
+    building_feature_types: List[BuildingFeatureType] = Field(
+        default_factory=list,
+        json_schema_extra={"default": []},
+        description="List of building feature type definitions",
+    )
     extrusion_feature_types: List[ExtrusionFeatureType] = Field(
         default_factory=list,
         json_schema_extra={"default": []},
@@ -384,15 +388,25 @@ class Configuration(BaseModel):
     typically loaded from a YAML file using the `load()` class method, which supports
     environment variable expansion.
     """
-    logging_level: str = Field(..., description="Logging level for the application (e.g., DEBUG, INFO, WARNING)")
-    i18n: Optional[I18nConfig] = Field(None, description="Internationalization (i18n) configuration")
+    logging_level: str = Field(
+        ..., description="Logging level for the application (e.g., DEBUG, INFO, WARNING)"
+    )
+    i18n: Optional[I18nConfig] = Field(
+        None, description="Internationalization (i18n) configuration"
+    )
     redis: RedisConfig = Field(..., description="Redis configuration")
     db: DBConfig = Field(..., description="Database configuration")
-    stac: STACConfig = Field(default_factory=lambda: STACConfig(dtm_items_url=None, building_items_url=None),
-                             description="STAC configuration for external data sources")
-    tin: TINConfig = Field(default_factory=lambda: TINConfig(grid_size=GridSize.SMALL, max_height_error=0.05),
-                           description="TIN (Triangulated Irregular Network) generation configuration")
-    ifc: IFCConfig = Field(..., description="IFC (Industry Foundation Classes) export configuration")
+    stac: STACConfig = Field(
+        default_factory=lambda: STACConfig(dtm_items_url=None, building_items_url=None),
+        description="STAC configuration for external data sources",
+    )
+    tin: TINConfig = Field(
+        default_factory=lambda: TINConfig(grid_size=GridSize.SMALL, max_height_error=0.05),
+        description="TIN (Triangulated Irregular Network) generation configuration",
+    )
+    ifc: IFCConfig = Field(
+        ..., description="IFC (Industry Foundation Classes) export configuration"
+    )
 
     @classmethod
     def load(cls, path: str) -> "Configuration":
@@ -426,9 +440,13 @@ class Configuration(BaseModel):
                 or if `stac.building_items_url` is missing while building feature types are defined.
         """
         if self.ifc.projection_feature_types and self.stac.dtm_items_url is None:
-            raise ValueError("stac.dtm_items_url is required when ifc.projection_feature_types is not empty")
+            raise ValueError(
+                "stac.dtm_items_url is required when ifc.projection_feature_types is not empty"
+            )
         if self.ifc.building_feature_types and self.stac.building_items_url is None:
-            raise ValueError("stac.building_items_url is required when ifc.building_feature_types is not empty")
+            raise ValueError(
+                "stac.building_items_url is required when ifc.building_feature_types is not empty"
+            )
         return self
 
 
