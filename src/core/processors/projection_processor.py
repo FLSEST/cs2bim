@@ -1,3 +1,4 @@
+"""Module for processing IFC projection elements from PostGIS data."""
 import logging
 from typing import Any
 
@@ -18,12 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 class ProjectionProcessor:
+    """Fetches and processes projection feature elements from PostGIS and DTM raster data."""
 
     def __init__(self):
+        """Initialize the processor with PostGIS and STAC service clients."""
         self.postgis_service = PostgisService()
         self.stac_service = STACService()
 
     def process(self, polygon: str, project_origin: Point) -> dict[str, list[Projection]]:
+        """Fetch projection data from PostGIS, apply DTM elevation, and return projections grouped by feature type."""
         feature_types_by_key = {p.name: p for p in config.ifc.projection_feature_types}
         if not feature_types_by_key:
             logger.info("no projection feature types configured")
@@ -84,6 +88,7 @@ class ProjectionProcessor:
         return projections_by_key
 
     def create_projection(self, feature_type: ProjectionFeatureType, projection_data: ProjectionData) -> Projection:
+        """Build a Projection object from feature type configuration and processed projection data."""
         projection = Projection(projection_data.create_mesh_data())
         self.add_attributes(projection, feature_type.entity_mapping.attributes, projection_data.element_row)
         self.add_properties(projection, feature_type.entity_mapping.properties, projection_data.element_row)
@@ -105,6 +110,7 @@ class ProjectionProcessor:
 
     def add_attributes(self, element: Element, attributes: list[ProjectionAttributeConfig],
                        element_row: dict[str, Any]):
+        """Set attributes on an element from SQL result row or static values."""
         for attribute in attributes:
             if attribute.source.type == ProjectionSource.SQL:
                 if attribute.source.expression in element_row:
@@ -113,6 +119,7 @@ class ProjectionProcessor:
                 element.add_attribute(attribute.attribute, attribute.source.expression)
 
     def add_properties(self, element: Element, properties: list[ProjectionPropertyConfig], element_row: dict[str, Any]):
+        """Set property set values on an element from SQL result row or static values."""
         for p in properties:
             if p.source.type == ProjectionSource.SQL:
                 if p.source.expression in element_row:
@@ -121,6 +128,7 @@ class ProjectionProcessor:
                 element.add_property(p.property_set, p.property, p.source.expression)
 
     def add_groups(self, element: Projection, feature_type: ProjectionFeatureType, element_row: dict[str, Any]):
+        """Assign group memberships to a projection element based on feature type group mappings."""
         for group_mapping in feature_type.group_mapping:
             if group_mapping.type == ProjectionSource.SQL:
                 element.add_group(element_row[group_mapping.expression])
