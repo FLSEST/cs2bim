@@ -27,6 +27,6 @@ class CompositeSolid(GmlGeometry):
                    ifc_representation_sub_context: entity_instance) -> entity_instance:
         """Map composite solid to an IFC representation."""
         ifc_faceted_breps = [solid.map_to_ifc(ifc_file, ifc_style) for solid in self.solids]
-        ifc_product_definition_shape = ifc_file.create_ifc_product_definition_shape(ifc_representation_sub_context,
-                                                                                    "Brep", ifc_faceted_breps)
+        ifc_product_definition_shape = ifc_file.create_ifc_product_definition_shape(
+            ifc_representation_sub_context, "Brep", ifc_faceted_breps)
         return ifc_product_definition_shape
