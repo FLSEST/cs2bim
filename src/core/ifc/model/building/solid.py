@@ -24,7 +24,8 @@ class Solid(GmlGeometry):
             raise ValueError("Solid expects exactly one exterior composite surface")
         self.exterior.from_gml(surface_exterior[0], project_origin)
         for interior_gml in gml.xpath("./gml:interior", namespaces=namespace):
-            for composite_surface_gml in interior_gml.xpath("./gml:CompositeSurface", namespaces=namespace):
+            for composite_surface_gml in interior_gml.xpath(
+                    "./gml:CompositeSurface", namespaces=namespace):
                 composite_surface = CompositeSurface()
                 composite_surface.from_gml(composite_surface_gml, project_origin)
                 self.interior.append(composite_surface)
@@ -38,10 +39,11 @@ class Solid(GmlGeometry):
             interior_ifc_faces = composite_surface.create_ifc_faces(ifc_file)
             interior_ifc_faces_list.append(interior_ifc_faces)
         if interior_ifc_faces_list:
-            ifc_faceted_brep = ifc_file.create_ifc_faceted_brep_with_voids(exterior_ifc_faces, interior_ifc_faces_list)
+            ifc_faceted_brep = ifc_file.create_ifc_faceted_brep_with_voids(
+                exterior_ifc_faces, interior_ifc_faces_list)
         else:
             ifc_faceted_brep = ifc_file.create_ifc_faceted_brep(exterior_ifc_faces)
         ifc_file.create_ifc_styled_item(ifc_faceted_brep, ifc_style)
-        ifc_product_definition_shape = ifc_file.create_ifc_product_definition_shape(ifc_representation_sub_context,
-                                                                                    "Brep", [ifc_faceted_brep])
+        ifc_product_definition_shape = ifc_file.create_ifc_product_definition_shape(
+            ifc_representation_sub_context, "Brep", [ifc_faceted_brep])
         return ifc_product_definition_shape
