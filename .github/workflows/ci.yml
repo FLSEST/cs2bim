@@ -48,7 +48,7 @@ jobs:
       DB_NAME: cs2bim
       DB_USER: cs2bim
       DB_PASSWORD: cs2bim
-      CONFIG_PATH: config.yml
+      CONFIG_PATH: tests/config/base_config.yml
     steps:
       - name: Checkout
         uses: actions/checkout@v4
