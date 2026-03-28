@@ -1,4 +1,3 @@
-"""Module defining grid size configuration."""
 from enum import Enum
 
 

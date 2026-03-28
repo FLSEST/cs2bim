@@ -1,4 +1,3 @@
-"""Module defining the Model class that aggregates IFC data and maps it to an IfcFile."""
 import logging
 
 from ifcopenshell import entity_instance
@@ -21,7 +20,6 @@ class Model:
     """Class holding all variable data for creating the ifc"""
 
     def __init__(self, file_name: str, schema: IfcVersion, project_origin: Point, polygon: str):
-        """Initialize a Model with output file name, IFC schema, project origin, and bounding polygon."""
         self.file_name = file_name
         self.schema = schema
         self.project_origin = project_origin
@@ -31,29 +29,25 @@ class Model:
         self.extrusions: dict[str, list[Extrusion]] = {}
 
     def add_projections(self, feature_type_key: str, projections: list[Projection]):
-        """Append a list of projections under the given feature type key."""
         if feature_type_key not in self.projections:
             self.projections[feature_type_key] = []
         self.projections[feature_type_key].extend(projections)
 
     def add_buildings(self, feature_type_key: str, elements: list[Building]):
-        """Append a list of buildings under the given feature type key."""
         if feature_type_key not in self.buildings:
             self.buildings[feature_type_key] = []
         self.buildings[feature_type_key].extend(elements)
 
     def add_extrusions(self, feature_type_key: str, elements: list[Extrusion]):
-        """Append a list of extrusions under the given feature type key."""
         if feature_type_key not in self.extrusions:
             self.extrusions[feature_type_key] = []
         self.extrusions[feature_type_key].extend(elements)
 
     def map_to_ifc(self, language: Language) -> IfcFile:
-        """Build and return an IfcFile from all accumulated projections, buildings, and extrusions."""
         logger.info(f"initialize new ifc writer for ifc '{self.file_name}'")
         ifc_file = IfcFile(self.schema, self.file_name, language)
 
-        logger.info("build ifc")
+        logger.info(f"build ifc")
         ifc_owner_history = ifc_file.create_ifc_owner_history(config.ifc.author, config.ifc.version,
                                                               config.ifc.application_name)
         ifc_length_unit = ifc_file.create_ifc_si_unit("LENGTHUNIT", "METRE")
@@ -96,15 +90,15 @@ class Model:
             location = Point(0, 0, 0)
         ifc_local_placement = ifc_file.create_ifc_local_placement(location)
 
-        group_mappings: dict[str, list[entity_instance]] = {}
-        ifc_spatial_structures: dict[Element, tuple[entity_instance, list[entity_instance]]] = {}
+        group_mappings = {}
+        ifc_spatial_structures = {}
 
         projections_config = {p.name: p for p in config.ifc.projection_feature_types}
         for feature_type_key, elements in self.projections.items():
             logger.info(f"build FeatureType {feature_type_key}")
             feature_type = projections_config[feature_type_key]
             ifc_style = ifc_file.create_ifc_surface_style(feature_type.color)
-            ifc_element_types: dict[Element, tuple[entity_instance, list[entity_instance]]] = {}
+            ifc_element_types = {}
             for element in elements:
                 ifc_element = element.map_to_ifc(ifc_file, feature_type.entity_mapping.entity, ifc_local_placement,
                                                  ifc_representation_sub_context, ifc_style)
@@ -155,7 +149,7 @@ class Model:
             logger.info(f"build FeatureType {feature_type_key}")
             feature_type = extrusion_config[feature_type_key]
             ifc_style = ifc_file.create_ifc_surface_style(feature_type.color)
-            ifc_element_types: dict[Element, tuple[entity_instance, list[entity_instance]]] = {}
+            ifc_element_types = {}
             for element in elements:
                 ifc_element = element.map_to_ifc(ifc_file, feature_type.entity_mapping.entity, ifc_local_placement,
                                                  ifc_representation_sub_context, ifc_style)
@@ -197,7 +191,6 @@ class Model:
 
     def create_ifc_element_type(self, ifc_file: IfcFile, element_type: Element,
                                 projection_entity: str) -> entity_instance:
-        """Create an IFC type product for the given entity and apply its attributes and properties."""
         ifc_element_type = ifc_file.create_ifc_type_product(f"{projection_entity}Type")
         element_type.set_ifc_attributes(ifc_file, ifc_element_type)
         element_type.set_ifc_properties(ifc_file, ifc_element_type)
@@ -206,7 +199,6 @@ class Model:
     def create_ifc_spatial_structure(self, ifc_file: IfcFile, ifc_local_placement: entity_instance,
                                      ifc_project: entity_instance,
                                      spatial_structure_element: Element) -> entity_instance:
-        """Create an IfcSite spatial structure element, aggregate it under the project, and apply its data."""
         ifc_spatial_structure = ifc_file.create_ifc_product("IfcSite", ifc_local_placement)
         ifc_file.create_ifc_rel_aggregates(ifc_project, [ifc_spatial_structure])
         spatial_structure_element.set_ifc_attributes(ifc_file, ifc_spatial_structure)
@@ -214,11 +206,10 @@ class Model:
         return ifc_spatial_structure
 
     def create_ifc_groups(self, ifc_file: IfcFile, group_mappings: dict[str, list[entity_instance]]):
-        """Create hierarchical IFC group entities and assign elements to them based on dot-separated group paths."""
-        ifc_groups: dict[str, entity_instance] = {}
+        ifc_groups = {}
         groups_config = {group.path: group for group in config.ifc.groups}
         for group_path, ifc_group_elements in group_mappings.items():
-            path: list[str] = []
+            path = []
             for group in group_path.split("."):
                 parent_group_path = ".".join(path)
                 path.append(group)

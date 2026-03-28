@@ -73,7 +73,7 @@ def load_yaml_as_flat_dict(path: str) -> dict[str, Any]:
         FileNotFoundError: If the YAML file does not exist.
         yaml.YAMLError: If the YAML file contains invalid syntax.
     """
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r") as f:
         yaml_data = yaml.safe_load(f)
 
     def flatten(data, parent_key=""):

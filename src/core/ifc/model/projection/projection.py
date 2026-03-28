@@ -1,4 +1,3 @@
-"""Module defining the Projection IFC mapping."""
 from ifcopenshell import entity_instance
 from shapely import Point
 
@@ -8,7 +7,6 @@ from core.ifc.model.projection.tessellation import Tessellation
 
 
 class Projection(FeatureElement):
-    """Represents a 2D projection geometry for IFC mapping."""
 
     def __init__(self, data: tuple[list[list[float]], list[list[int]]]):
         super().__init__()
@@ -21,13 +19,8 @@ class Projection(FeatureElement):
             p3 = Point(point_list[triangle[2]])
             self.triangles.append((p1, p2, p3))
 
-    def map_to_ifc(
-            self, ifc_file: IfcFile, entity: str,
-            placement_rel_to: entity_instance,
-            ifc_representation_sub_context: entity_instance,
-            ifc_style: entity_instance,
-    ) -> entity_instance:
-        """Map projection to an IFC representation."""
+    def map_to_ifc(self, ifc_file: IfcFile, entity: str, placement_rel_to: entity_instance, ifc_representation_sub_context: entity_instance,
+                   ifc_style: entity_instance) -> entity_instance:
         tessellation = Tessellation(self.triangles)
         ifc_face_set = tessellation.map_to_ifc(ifc_file)
         ifc_product_definition_shape = ifc_file.create_ifc_product_definition_shape(ifc_representation_sub_context,

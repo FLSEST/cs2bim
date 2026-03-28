@@ -1,4 +1,3 @@
-"""Module defining polygon cross-section geometry."""
 import logging
 
 from shapely import Point
@@ -10,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class Polygon(CrossSection):
-    """Represents a polygon cross-section for extrusion."""
 
     def __init__(self, polygon: BaseGeometry, local: bool):
         super().__init__()

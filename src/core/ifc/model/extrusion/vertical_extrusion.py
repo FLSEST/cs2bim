@@ -1,4 +1,3 @@
-"""Module defining vertical extrusion geometry."""
 import logging
 from ifcopenshell import entity_instance
 from shapely import Point
@@ -17,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class VerticalExtrusion(Extrusion):
-    """Represents a vertical extrusion geometry for IFC mapping."""
 
     def __init__(self, area: CrossSection, start_point: BaseGeometry, end_point: BaseGeometry, orientation: float):
         super().__init__()
@@ -28,18 +26,17 @@ class VerticalExtrusion(Extrusion):
 
     def map_to_ifc(self, ifc_file: IfcFile, entity: str, placement_rel_to: entity_instance,
                    ifc_representation_sub_context: entity_instance, ifc_style: entity_instance) -> entity_instance:
-        """Map vertical extrusion to an IFC representation."""
         if isinstance(self.area, Polygon) and not self.area.local:
             ifc_profile_def = ifc_file.create_ifc_arbitrary_closed_profile_def(self.area.points)
             self.start_point = translate(self.start_point, xoff=-self.start_point.x, yoff=-self.start_point.y, zoff=0)
-        elif isinstance(self.area, (Egg, Polygon)):
+        elif isinstance(self.area, Egg) or isinstance(self.area, Polygon):
             ifc_profile_def = ifc_file.create_ifc_arbitrary_closed_profile_def(self.area.points)
         elif isinstance(self.area, Rectangle):
             ifc_profile_def = ifc_file.create_ifc_rectangle_profile_def(self.area.width, self.area.height)
         elif isinstance(self.area, Circle):
             ifc_profile_def = ifc_file.create_ifc_circle_profile_def(self.area.radius)
         else:
-            raise NotImplementedError(
+            raise Exception(
                 f"simple extrusion building step for area class {type(self.area)} not implemented")
 
         ifc_geometry = ifc_file.create_ifc_extruded_area_solid(ifc_profile_def, self.start_point,

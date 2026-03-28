@@ -71,17 +71,11 @@ async def generate_model(request_data: GenerateModelRequest):
         try:
             project_origin = [float(coord.strip()) for coord in request_data.PROJECT_ORIGIN.split(",")]
         except ValueError:
-            raise HTTPException(
-                status_code=422,
-                detail="PROJECT_ORIGIN must contain only numbers in the"
-                       " format 'float,float,float' (e.g., 0.0,0.0,0.0).",
-            )
+            raise HTTPException(status_code=422,
+                                detail="PROJECT_ORIGIN must contain only numbers in the format 'float,float,float' (e.g., 0.0,0.0,0.0).")
         if len(project_origin) != 3:
-            raise HTTPException(
-                status_code=422,
-                detail="PROJECT_ORIGIN must contain exactly three values"
-                       " separated by commas (e.g., 0.0,0.0,0.0).",
-            )
+            raise HTTPException(status_code=422,
+                                detail="PROJECT_ORIGIN must contain exactly three values separated by commas (e.g., 0.0,0.0,0.0).")
     try:
         geom = wkt.loads(polygon)
         if not isinstance(geom, Polygon):
@@ -90,13 +84,13 @@ async def generate_model(request_data: GenerateModelRequest):
             raise HTTPException(status_code=422, detail="POLYGON parameter is not valid")
         if not geom.exterior.is_ring or not all(interior.is_ring for interior in geom.interiors):
             raise HTTPException(status_code=422, detail="POLYGON parameter is not closed")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"POLYGON parameter could not be parsed: {e}")
 
     logger.info(
-        f"Received generate-model request: IFC_VERSION={ifc_version}, "
-        f"NAME={name}, POLYGON={polygon}, "
-        f"PROJECT_ORIGIN={project_origin if project_origin else 'calculated'}"
+        f"Received generate-model request: IFC_VERSION={ifc_version}, NAME={name}, POLYGON={polygon}, PROJECT_ORIGIN={project_origin if project_origin else 'calculated'}"
     )
 
     task = model_generation_task.delay(ifc_version.value, name, polygon, project_origin,

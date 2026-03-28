@@ -5,8 +5,11 @@ __pycache__
 /cache
 /ifc
 /logs
-.qa-venv/
+/_book
 
 # files
 *.stl
 *.ifc
+/.quarto/
+**/*.quarto_ipynb
+#/_book

@@ -1,0 +1,27 @@
+stages:
+  - test
+  - deploy
+
+sast:
+  stage: test
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+sync-to-github:
+  stage: deploy
+  only:
+    - main
+    - develop
+  script:
+    - git remote add github https://oauth2:${GITHUB_TOKEN}@github.com/idibau/cs2bim.git || true
+    - git push github HEAD:${CI_COMMIT_BRANCH}
+
+sync-to-github-pages:
+  stage: deploy
+  only:
+    - main
+  script:
+    - git remote add github https://oauth2:${GITHUB_TOKEN}@github.com/idibau/cs2bim.git || true
+    - git fetch origin gh-pages
+    - git push github refs/remotes/origin/gh-pages:refs/heads/gh-pages

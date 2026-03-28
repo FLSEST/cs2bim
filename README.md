@@ -1,5 +1,3 @@
-![status: WIP](https://img.shields.io/badge/status-WIP-yellow)
-
 # cs2bim
 
 <!-- TOC -->
@@ -18,6 +16,9 @@
   * [Contact](#contact)
   * [References](#references)
 <!-- TOC -->
+
+> [!NOTE] 
+> See the detailed documentation [here](https://idibau.github.io/cs2bim/).
 
 ## Project description
 
@@ -201,7 +202,7 @@ University of Applied Sciences and Arts Northwestern Switzerland, Institute of V
 
 Project head
 
-- Oliver Schneider
+- Prof. Oliver Schneider
 - Prof. Lukas Schildknecht
 
 Project staff

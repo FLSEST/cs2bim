@@ -1,4 +1,3 @@
-"""Module defining the abstract CrossSection base class."""
 from abc import ABC
 
 

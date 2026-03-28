@@ -1,4 +1,3 @@
-"""Module for holding and processing per-element projection data including raster elevation."""
 import logging
 import math
 from typing import Any
@@ -16,10 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class ProjectionData:
-    """Stores polygon geometry and raster elevation data for a single projection element."""
 
     def __init__(self, element_row: dict[str, Any], project_origin: Point):
-        """Initialize projection data by parsing the WKT polygon and splitting large polygons into tiles."""
         self.element_row = element_row
         self.project_origin = project_origin
         self.areas = []
@@ -33,14 +30,14 @@ class ProjectionData:
                 polygons = self.cut_polygon_if_large(sub_polygon)
                 for cut_polygon in polygons:
                     self.areas.append(Area(cut_polygon))
+        else:
+            logger.debug(f"Skipping unsupported geometry: {polygon.geom_type}")
 
     def add_raster_points(self, raster_points: RasterPoints):
-        """Add DTM raster point data to each area tile in this projection element."""
         for area in self.areas:
             area.add_raster_points(raster_points)
 
     def create_mesh_data(self):
-        """Merge mesh data from all area tiles into unified point and face index lists, offset by project origin."""
         points_total = []
         point_to_index = {}
         indices_total = []
@@ -65,7 +62,6 @@ class ProjectionData:
         return points_total, indices_total
 
     def cut_polygon_if_large(self, poly: shapely.Polygon, max_size_m: int = 1000) -> list[BaseGeometry]:
-        """Split a polygon into tiles if it exceeds the maximum size in any dimension."""
         minx, miny, maxx, maxy = poly.bounds
         width = maxx - minx
         height = maxy - miny
@@ -91,5 +87,7 @@ class ProjectionData:
                     cut_polys.append(inter)
                 elif inter.geom_type == "MultiPolygon":
                     cut_polys.extend(list(inter.geoms))
+                else:
+                    logger.debug(f"Skipping degenerate intersection geometry: {inter.geom_type}")
 
         return cut_polys

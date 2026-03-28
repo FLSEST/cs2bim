@@ -1,4 +1,3 @@
-"""Module defining extrusion source configuration."""
 from enum import Enum
 
 

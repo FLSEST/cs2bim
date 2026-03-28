@@ -1,4 +1,3 @@
-"""Module defining GML geometry configuration."""
 from enum import Enum
 
 

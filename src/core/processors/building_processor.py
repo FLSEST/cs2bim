@@ -33,25 +33,24 @@ class BuildingProcessor:
             logger.info("no building feature types configured")
             return {}
 
-        logger.info("fetch city gml files")
+        logger.info(f"fetch city gml files")
         bounding_box = BoundingBox.from_wkts([polygon])
         city_gmls = self.stac_service.fetch_city_gml_assets(bounding_box)
         logger.info(f"fetched {len(city_gmls)} city gml files")
 
-        buildings_by_key: dict[str, list[Building]] = {}
+        buildings_by_key = {}
         for feature_type_key, feature_type in feature_types.items():
             logger.info(f"create {feature_type_key} feature type")
-            with open(feature_type.sql_path, "r", encoding="utf-8") as file:
+            with open(feature_type.sql_path, "r") as file:
                 sql = file.read()
             sql_result = self.postgis_service.fetch_feature_type_elements(sql, polygon)
             element_rows_by_egid = {row["egid"]: row for row in sql_result}
 
             for index, city_gml in enumerate(city_gmls):
                 logger.info(f"processing city gml {index + 1}/{len(city_gmls)}")
-                context_iter = etree.iterparse(city_gml, events=("end",),
-                                               tag="{http://www.opengis.net/citygml/building/2.0}Building")
-
                 for key, building_config in feature_types.items():
+                    context_iter = etree.iterparse(city_gml, events=("end",),
+                                                   tag="{http://www.opengis.net/citygml/building/2.0}Building")
                     for event, building_gml in context_iter:
                         value_elem = building_gml.find(building_config.egid_xpath, namespaces=namespace)
                         if value_elem is not None:
@@ -63,7 +62,7 @@ class BuildingProcessor:
                                 if feature_type_key not in buildings_by_key:
                                     buildings_by_key[feature_type_key] = []
                                 buildings_by_key[feature_type_key].append(building)
-                                logger.debug("finished processing building")
+                                logger.debug(f"finished processing building")
                         building_gml.clear()
 
                         while building_gml.getprevious() is not None:
@@ -76,7 +75,7 @@ class BuildingProcessor:
         self.add_attributes(building, building_config.entity_mapping.attributes, building_gml, element_row)
         self.add_properties(building, building_config.entity_mapping.properties, building_gml, element_row)
         self.add_groups(building, building_config, building_gml, element_row)
-        logger.debug("start processing building parts")
+        logger.debug(f"start processing building parts")
         for building_part_config in building_config.entity_mapping.building_parts:
             geometry_mapping = building_part_config.geometry_mapping
             geometry_gmls = building_gml.xpath(geometry_mapping.xpath, namespaces=namespace)

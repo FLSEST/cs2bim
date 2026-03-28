@@ -21,8 +21,8 @@ class Area:
         if not isinstance(polygon, shapely.Polygon):
             raise ValueError(f"{type(polygon).__name__} not supported")
         self.polygon = orient(polygon, sign=1.0)
-        self.raster_points_within: list = []
-        self.raster_points_buffer: list = []
+        self.raster_points_within = []
+        self.raster_points_buffer = []
 
     def add_raster_points(self, raster_points: RasterPoints):
         """Add raster points within and buffered around the polygon area."""
@@ -36,7 +36,7 @@ class Area:
     def create_mesh(self) -> tuple[np.ndarray, np.ndarray]:
         """Create a triangulated mesh from the polygon and raster points."""
         if not self.raster_points_buffer:
-            raise RuntimeError("No raster points found for area")
+            raise ValueError("No raster points found for area")
 
         self.raster_points_buffer = np.vstack(self.raster_points_buffer)
         if self.raster_points_within:
@@ -113,7 +113,7 @@ class Area:
         """Reduce mesh complexity while preserving topology."""
         pv_faces = np.insert(faces, 0, 3, axis=1)
         polydata = pv.PolyData(vertices, pv_faces)
-        max_normal_angle = min(2 * np.rad2deg(np.arctan(config.tin.max_height_error / config.tin.grid_size.value)), 45)
+        max_normal_angle = min(2 * np.rad2deg(np.arctan(config.tin.max_height_error / config.tin.grid_size)), 45)
         polydata.decimate_pro(
             reduction=0.99,
             feature_angle=max_normal_angle,

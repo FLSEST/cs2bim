@@ -1,4 +1,3 @@
-"""Module defining building source configuration."""
 from enum import Enum
 
 

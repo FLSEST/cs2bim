@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 class ModelGenerator:
 
+    def __init__(self):
+        pass
+
     @staticmethod
     def calculate_origin_from_polygon(wkt_polygon: str):
         geo = wkt.loads(wkt_polygon)
