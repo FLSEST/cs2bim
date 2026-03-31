@@ -396,4 +396,4 @@ class Configuration(BaseModel):
         return self
 
 
-config = Configuration.load("/workspace/config.yml")
+config = Configuration.load(os.environ.get("CONFIG_PATH", "/workspace/config.yml"))
